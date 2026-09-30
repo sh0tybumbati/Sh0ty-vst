@@ -54,7 +54,7 @@ juce_add_plugin(Sh0tyFZ3
     NEEDS_MIDI_INPUT FALSE
     NEEDS_MIDI_OUTPUT FALSE
     COPY_PLUGIN_AFTER_BUILD FALSE)
-target_sources(Sh0tyFZ3 PRIVATE Source/FuzzProcessor.cpp Source/FuzzProcessor.h)
+target_sources(Sh0tyFZ3 PRIVATE Source/FuzzProcessor.cpp Source/FuzzProcessor.h Source/FuzzEditor.cpp Source/FuzzEditor.h)
 target_compile_definitions(Sh0tyFZ3 PUBLIC JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0 JUCE_VST3_CAN_REPLACE_VST2=0)
 target_link_libraries(Sh0tyFZ3 PRIVATE juce::juce_audio_utils juce::juce_dsp
     PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_warning_flags)
@@ -69,4 +69,13 @@ if(KTG1_BUILD_TESTS)
     add_executable(fz3_dsp_test tests/fuzz_test.cpp)
     target_include_directories(fz3_dsp_test PRIVATE Source)
     add_test(NAME fuzz COMMAND fz3_dsp_test)
+endif()
+
+# Renders the FZ-3 editor to a PNG (used to review the UI headlessly under xvfb).
+option(KTG1_BUILD_UI_SNAPSHOT "Build UI snapshot tool" OFF)
+if(KTG1_BUILD_UI_SNAPSHOT)
+    juce_add_console_app(FZ3Snapshot PRODUCT_NAME "FZ3Snapshot")
+    target_sources(FZ3Snapshot PRIVATE tests/snapshot.cpp Source/FuzzProcessor.cpp Source/FuzzEditor.cpp)
+    target_compile_definitions(FZ3Snapshot PRIVATE JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0 JUCE_STANDALONE_APPLICATION=1)
+    target_link_libraries(FZ3Snapshot PRIVATE juce::juce_audio_utils juce::juce_dsp juce::juce_recommended_config_flags)
 endif()

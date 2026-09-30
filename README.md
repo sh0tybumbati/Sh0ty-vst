@@ -30,6 +30,8 @@ libxrandr-dev libxcursor-dev libxext-dev libgl1-mesa-dev
 
 Standalone apps (no DAW needed) are in `build/*_artefacts/Release/Standalone/`.
 
+![FZ-3 editor](docs/fz3-ui.png)
+
 ## FZ-3 model
 The FZ-3 DSP follows the signal path of the "Boss FZ3" schematic (JFET buffers, Q1 treble shelf,
 Q3 fuzz stage, Q4, tone network, volume). The Fuzz pot's gain law is an estimate because the

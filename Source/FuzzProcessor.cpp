@@ -1,4 +1,7 @@
 #include "FuzzProcessor.h"
+#include "FuzzEditor.h"
+
+juce::AudioProcessorEditor* Sh0tyFZ3Processor::createEditor() { return new Sh0tyFZ3Editor (*this); }
 
 Sh0tyFZ3Processor::Sh0tyFZ3Processor()
     : AudioProcessor (BusesProperties()

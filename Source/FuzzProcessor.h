@@ -11,7 +11,7 @@ public:
     void releaseResources() override {}
     bool isBusesLayoutSupported (const BusesLayout&) const override;
     void processBlock (juce::AudioBuffer<float>&, juce::MidiBuffer&) override;
-    juce::AudioProcessorEditor* createEditor() override { return new juce::GenericAudioProcessorEditor (*this); }
+    juce::AudioProcessorEditor* createEditor() override;
     bool hasEditor() const override { return true; }
     const juce::String getName() const override { return "Sh0ty FZ-3"; }
     bool acceptsMidi() const override { return false; }
