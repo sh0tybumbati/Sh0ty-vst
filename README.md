@@ -17,3 +17,20 @@ Linux: `~/.vst3`). GitHub Actions builds Windows/macOS/Linux artifacts on every 
 
 Linux build deps: libasound2-dev libfreetype-dev libfontconfig1-dev libx11-dev libxinerama-dev
 libxrandr-dev libxcursor-dev libxext-dev libgl1-mesa-dev
+
+### CachyOS / Arch Linux
+    sudo pacman -S --needed base-devel cmake git alsa-lib freetype2 fontconfig \
+      libx11 libxinerama libxrandr libxcursor libxext mesa curl
+    git clone https://github.com/sh0tybumbati/sh0ty-vst.git && cd sh0ty-vst
+    git checkout ccr-0f36f608-4k30zx
+    cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+    cmake --build build -j
+    ctest --test-dir build --output-on-failure
+    mkdir -p ~/.vst3 && cp -r build/*_artefacts/Release/VST3/*.vst3 ~/.vst3/
+
+Standalone apps (no DAW needed) are in `build/*_artefacts/Release/Standalone/`.
+
+## FZ-3 model
+The FZ-3 DSP follows the signal path of the "Boss FZ3" schematic (JFET buffers, Q1 treble shelf,
+Q3 fuzz stage, Q4, tone network, volume). The Fuzz pot's gain law is an estimate because the
+schematic draws it as a placeholder; the sheet's clean "2 CH MIXER" branch is not modelled (use Mix).

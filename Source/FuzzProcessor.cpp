@@ -12,11 +12,12 @@ Sh0tyFZ3Processor::Sh0tyFZ3Processor()
                   juce::NormalisableRange<float> (0.f, 1.f, 0.001f), def)); };
           add ("fuzz", "Fuzz", 0.7f); add ("tone", "Tone", 0.5f);
           add ("volume", "Volume", 0.5f); add ("mix", "Mix", 1.f);
+          p.push_back (std::make_unique<juce::AudioParameterFloat> (juce::ParameterID { "trim", 1 }, "Input Trim (dB)", juce::NormalisableRange<float> (-24.f, 24.f, 0.1f), 0.f));
           return juce::AudioProcessorValueTreeState::ParameterLayout { p.begin(), p.end() };
       }())
 {
     pFuzz = apvts.getRawParameterValue ("fuzz");   pTone = apvts.getRawParameterValue ("tone");
-    pVolume = apvts.getRawParameterValue ("volume"); pMix = apvts.getRawParameterValue ("mix");
+    pVolume = apvts.getRawParameterValue ("volume"); pMix = apvts.getRawParameterValue ("mix"); pTrim = apvts.getRawParameterValue ("trim");
 }
 
 bool Sh0tyFZ3Processor::isBusesLayoutSupported (const BusesLayout& l) const
@@ -42,7 +43,8 @@ void Sh0tyFZ3Processor::processBlock (juce::AudioBuffer<float>& buffer, juce::Mi
     const int n = buffer.getNumSamples(), nCh = juce::jmin (buffer.getNumChannels(), 2);
     fuzz.setTargetValue (*pFuzz); tone.setTargetValue (*pTone);
     volume.setTargetValue (*pVolume); mix.setTargetValue (*pMix);
-    fz3::Params prm;
+    const float trimLin = juce::Decibels::decibelsToGain (pTrim->load());
+    fz3::Params prm; prm.trim = trimLin;
     prm.fuzz = fuzz.skip (n); prm.tone = tone.skip (n); prm.volume = volume.skip (n); prm.mix = mix.skip (n);
 
     juce::dsp::AudioBlock<float> block (buffer);
