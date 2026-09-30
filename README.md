@@ -1,10 +1,14 @@
 # Sh0ty VST plugins
 
-Three plugins: **Sh0ty FZ-3 Fuzz** (Fuzz, Tone, Volume, Mix; inspired by the Boss FZ-3) and **Sh0ty KTG-1** — a tube-preamp plugin (VST3 / AU / Standalone) inspired by the Seymour Duncan KTG-1.
-Built with JUCE. It is a generic triode-style model (asymmetric saturation, coupling
-caps, 4x oversampling), **not** a component-level model of the real circuit.
+Three guitar-pedal / preamp plugins (VST3, AU on macOS, and Standalone), built with JUCE:
 
+| Plugin | Inspired by | Interface |
+|---|---|---|
+| **Sh0ty KTG-1** | Seymour Duncan KTG-1 two-channel tube preamp | Bauhaus |
+| **Sh0ty FZ-3 Fuzz** | Boss FZ-3 | Art deco |
+| **Sh0ty BD-2 Blues Driver** | Boss BD-2 | Art nouveau |
 
+These are "inspired by" models, not component-level circuit simulations. Interfaces are original artwork.
 
 ## Build
     cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
