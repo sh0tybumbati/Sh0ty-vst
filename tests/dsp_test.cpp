@@ -72,6 +72,17 @@ int main()
         CHECK (peak (on) > 1.5f * peak (off), ch ? "ch2 pull boost adds gain" : "ch1 pull boost adds gain");
     }
 
+    // 5b. The boost is a cathode-bypass SHELF: it lifts highs far more than lows
+    for (int ch = 0; ch < 2; ++ch)
+    {
+        p.ch2 = ch == 1; p.od1 = p.od2 = 0.f;
+        const double lowOff = bin (run (0.01f, p, 60), 60), highOff = bin (run (0.01f, p, 2000), 2000);
+        (ch ? p.boost2 : p.boost1) = true;
+        const double lowOn = bin (run (0.01f, p, 60), 60), highOn = bin (run (0.01f, p, 2000), 2000);
+        (ch ? p.boost2 : p.boost1) = false;
+        CHECK ((highOn / highOff) > 2.0 * (lowOn / lowOff), ch ? "ch2 boost lifts highs more than lows (shelf)" : "ch1 boost lifts highs more than lows (shelf)");
+    }
+
     // 6. Pull crunch squashes dynamics on channel 2
     p.ch2 = true; p.od2 = 0.6f; p.master2 = 0.7f; p.crunch2 = false;
     const float r0 = peak (run (0.3f, p)) / peak (run (0.03f, p));

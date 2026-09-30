@@ -51,8 +51,10 @@ estimate. FET bypass switching is not modelled. Art-nouveau interface with origi
 Two-channel tube guitar preamp with the control layout of the real rack unit: Input trim, shared
 Bass / Mid / Treble, Channel 1 (Overdrive with pull boost, Master), Channel 2 (Overdrive with pull boost,
 Master with pull crunch), Output, channel selector and On/Off. There is no schematic behind it, so the sound
-is an "inspired by" model of generic triode-stage behaviour; the pull-boost and pull-crunch voicings and
-the signal order are estimates. Bauhaus interface with original artwork.
+is an "inspired by" model of generic triode-stage behaviour. Pull boost is modelled as a cathode-bypass
+shelf (unity below the cap corner, extra gain above it), with a pre-distortion high-pass to keep the low end tight;
+the tone stack is three decoupled EQ bands (a passive interactive stack is not modelled). Voicings and the signal
+order are estimates. Bauhaus interface with original artwork.
 
 ## FZ-3 model
 The FZ-3 DSP follows the signal path of the "Boss FZ3" schematic (JFET buffers, Q1 treble shelf,

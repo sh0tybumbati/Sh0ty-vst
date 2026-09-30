@@ -111,7 +111,10 @@ public:
     {
         fs = oversampledRate;
         for (auto* s : { &s11, &s12, &s21, &s22, &s23 }) s->prepare (fs);
-        inHp.setCutoff (35.f, fs);
+        inHp1.setCutoff (70.f, fs);      // pre-emphasis: keeps the low end tight before clipping
+        inHp2.setCutoff (100.f, fs);     // hotter channel is tightened a bit more
+        for (auto* f : { &byp11, &byp12 }) f->setCutoff (130.f, fs);   // ch1 cathode-bypass caps
+        for (auto* f : { &byp21, &byp22 }) f->setCutoff (80.f, fs);    // ch2 (larger caps, lower corner)
         chSmooth.setCutoff (60.f, fs);
         chTarget = 0.f;
         reset();
@@ -120,7 +123,8 @@ public:
     void reset()
     {
         for (auto* s : { &s11, &s12, &s21, &s22, &s23 }) s->reset();
-        inHp.reset(); chSmooth.reset(); env = 0.f;
+        inHp1.reset(); inHp2.reset(); chSmooth.reset(); env = 0.f;
+        for (auto* f : { &byp11, &byp12, &byp21, &byp22 }) f->reset();
         bassBq.reset(); midBq.reset(); trebBq.reset();
     }
 
@@ -138,18 +142,19 @@ public:
     {
         if (!p.on) return in;
 
-        const float x = inHp.hp (in * p.trim);
+        const float xin = in * p.trim;
+        const float x1 = inHp1.hp (xin), x2 = inHp2.hp (xin);
 
-        // --- Channel 1: cleaner, two stages, pull-boost adds gain ---
-        const float b1 = p.boost1 ? 2.4f : 1.f;
-        float a = s11.process (x, (1.f + 9.f * p.od1 * p.od1) * b1);
-        a = s12.process (a * 0.6f, 1.5f + 3.f * p.od1 * (p.boost1 ? 1.6f : 1.f));
+        // --- Channel 1: cleaner, two stages ---
+        // Pull boost lifts the cathode bypass cap: below its corner the stage keeps local feedback
+        // (low gain), above it the gain rises by `ratio` (a shelf, not a flat gain change).
+        float a = s11.process (bypass (byp11, x1, p.boost1 ? 3.2f : 1.f), 1.f + 9.f * p.od1 * p.od1);
+        a = s12.process (bypass (byp12, a * 0.6f, p.boost1 ? 2.0f : 1.f), 1.5f + 3.f * p.od1);
         a *= masterGain (p.master1);
 
-        // --- Channel 2: hotter, three stages, pull-boost adds gain, pull-crunch adds power-stage squash ---
-        const float b2 = p.boost2 ? 2.4f : 1.f;
-        float b = s21.process (x, (1.f + 16.f * p.od2 * p.od2) * b2);
-        b = s22.process (b * 0.6f, 2.f + 7.f * p.od2 * (p.boost2 ? 1.5f : 1.f));
+        // --- Channel 2: hotter, three stages; pull crunch adds power-stage squash ---
+        float b = s21.process (bypass (byp21, x2, p.boost2 ? 3.2f : 1.f), 1.f + 16.f * p.od2 * p.od2);
+        b = s22.process (bypass (byp22, b * 0.6f, p.boost2 ? 2.0f : 1.f), 2.f + 7.f * p.od2);
         b = s23.process (b * 0.6f, 1.5f + 3.f * p.od2);
         b *= masterGain (p.master2);
         if (p.crunch2)
@@ -165,6 +170,9 @@ public:
         return y * outputGain (p.output);
     }
 
+    // Cathode-bypass shelf: unity below the cap corner, `ratio` above it.
+    static float bypass (OnePole& f, float x, float ratio) { return x + (ratio - 1.f) * f.hp (x); }
+
     static float masterGain (float m) { return 3.f * m * m; }
     static float outputGain (float o) { return 4.f * o * o; }
 
@@ -173,7 +181,7 @@ private:
     bool cached = false;
     Params p;
     TriodeStage s11, s12, s21, s22, s23;
-    OnePole inHp, chSmooth;
+    OnePole inHp1, inHp2, chSmooth, byp11, byp12, byp21, byp22;
     Biquad bassBq, midBq, trebBq;
 };
 } // namespace ktg1
