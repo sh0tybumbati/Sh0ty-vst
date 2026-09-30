@@ -1,6 +1,6 @@
 # Sh0ty VST plugins
 
-Two plugins: **Sh0ty FZ-3 Fuzz** (Fuzz, Tone, Volume, Mix; inspired by the Boss FZ-3) and **Sh0ty KTG-1** — a tube-preamp plugin (VST3 / AU / Standalone) inspired by the Seymour Duncan KTG-1.
+Three plugins: **Sh0ty FZ-3 Fuzz** (Fuzz, Tone, Volume, Mix; inspired by the Boss FZ-3) and **Sh0ty KTG-1** — a tube-preamp plugin (VST3 / AU / Standalone) inspired by the Seymour Duncan KTG-1.
 Built with JUCE. It is a generic triode-style model (asymmetric saturation, coupling
 caps, 4x oversampling), **not** a component-level model of the real circuit.
 
@@ -31,6 +31,15 @@ libxrandr-dev libxcursor-dev libxext-dev libgl1-mesa-dev
 Standalone apps (no DAW needed) are in `build/*_artefacts/Release/Standalone/`.
 
 ![FZ-3 editor](docs/fz3-ui.png)
+
+## BD-2 Blues Driver
+![BD-2 editor](docs/bd2-ui.png)
+
+Sh0ty BD-2 Blues Driver (Gain, Tone, Level, Mix, Input Trim) follows the Boss BD-2 schematic's signal path:
+JFET input buffer, two PNP gain stages with the dual-gang Gain pot, 1SS133 diode clippers between them,
+and an op-amp tone stage. Transistor stages are gain + asymmetric rail clipping, diodes are a soft-knee
+limiter, the tone stage is a +/-10 dB tilt at 1 kHz, and the Gain pot's split across the two stages is an
+estimate. FET bypass switching is not modelled. Art-nouveau interface with original artwork.
 
 ## FZ-3 model
 The FZ-3 DSP follows the signal path of the "Boss FZ3" schematic (JFET buffers, Q1 treble shelf,
