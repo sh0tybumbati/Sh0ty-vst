@@ -22,6 +22,22 @@ Linux: `~/.vst3`). GitHub Actions builds Windows/macOS/Linux artifacts on every 
 Linux build deps: libasound2-dev libfreetype-dev libfontconfig1-dev libx11-dev libxinerama-dev
 libxrandr-dev libxcursor-dev libxext-dev libgl1-mesa-dev
 
+### macOS (Audio Unit + VST3)
+CMake builds **AU** and **VST3** (and Standalone) on macOS, as universal binaries (Apple Silicon + Intel, macOS 10.13+).
+GitHub Actions builds them and uploads `Sh0ty-plugins-macOS-universal` (zipped bundles) on every push; it also runs
+Apple's `auval` on each AU (informational).
+
+    cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+    cmake --build build -j
+    # install
+    cp -R build/*_artefacts/Release/AU/*.component  ~/Library/Audio/Plug-Ins/Components/
+    cp -R build/*_artefacts/Release/VST3/*.vst3     ~/Library/Audio/Plug-Ins/VST3/
+    killall -9 AudioComponentRegistrar 2>/dev/null   # make the system rescan Audio Units
+
+The plugins are **not notarized or signed with a developer ID**. If a downloaded copy is blocked by Gatekeeper, run
+`xattr -dr com.apple.quarantine <plugin>` on it, or right-click it and choose Open. Validate an AU with
+`auval -v aufx Ktg1 Sh0t` (KTG-1), `Fz3x` (FZ-3) or `Bd2x` (BD-2). Logic Pro only lists AUs that pass `auval`.
+
 ### CachyOS / Arch Linux
     sudo pacman -S --needed base-devel cmake git alsa-lib freetype2 fontconfig \
       libx11 libxinerama libxrandr libxcursor libxext mesa curl

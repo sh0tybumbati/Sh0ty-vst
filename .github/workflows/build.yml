@@ -18,7 +18,37 @@ jobs:
         run: cmake --build build --config Release -j4
       - name: DSP tests
         run: ctest --test-dir build -C Release --output-on-failure
+
+      # macOS: validate the Audio Units with Apple's auval (non-blocking; reports problems in the log)
+      - name: Validate AU (auval)
+        if: runner.os == 'macOS'
+        continue-on-error: true
+        run: |
+          mkdir -p ~/Library/Audio/Plug-Ins/Components
+          cp -R build/*_artefacts/Release/AU/*.component ~/Library/Audio/Plug-Ins/Components/
+          killall -9 AudioComponentRegistrar || true
+          sleep 3
+          auval -v aufx Ktg1 Sh0t
+          auval -v aufx Fz3x Sh0t
+          auval -v aufx Bd2x Sh0t
+
+      # macOS bundles must be zipped with ditto to keep their structure and permissions
+      - name: Package (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          mkdir -p dist
+          for f in build/*_artefacts/Release/AU/*.component build/*_artefacts/Release/VST3/*.vst3; do
+            ditto -c -k --keepParent "$f" "dist/$(basename "$f").zip"
+          done
       - uses: actions/upload-artifact@v4
+        if: runner.os == 'macOS'
         with:
-          name: Sh0tyKTG1-${{ runner.os }}
-          path: build/Sh0tyKTG1_artefacts/Release/VST3/
+          name: Sh0ty-plugins-macOS-universal
+          path: dist/
+
+      - uses: actions/upload-artifact@v4
+        if: runner.os != 'macOS'
+        with:
+          name: Sh0ty-plugins-${{ runner.os }}
+          path: |
+            build/*_artefacts/Release/VST3/
