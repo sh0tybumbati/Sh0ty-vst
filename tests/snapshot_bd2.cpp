@@ -5,6 +5,8 @@ int main (int argc, char** argv)
 {
     juce::ScopedJuceInitialiser_GUI init;
     Sh0tyBD2Processor proc;
+    if (argc > 2 && juce::String (argv[2]) == "off")
+        proc.apvts.getParameter ("on")->setValueNotifyingHost (0.f);
     std::unique_ptr<juce::AudioProcessorEditor> ed (proc.createEditor());
     auto img = ed->createComponentSnapshot (ed->getLocalBounds(), true, 2.f);
     juce::File out (argc > 1 ? argv[1] : "bd2.png");

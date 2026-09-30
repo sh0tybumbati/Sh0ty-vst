@@ -139,6 +139,7 @@ Sh0tyFZ3Editor::Sh0tyFZ3Editor (Sh0tyFZ3Processor& p) : AudioProcessorEditor (&p
     addKnob (trim,  "trim",   "TRIM",  true);
     footswitch.setClickingTogglesState (true);
     footswitch.setTooltip ("Bypass footswitch");
+    footswitch.onStateChange = [this] { repaint(); };
     addAndMakeVisible (footswitch);
     footAttach = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment> (proc.apvts, "on", footswitch);
     setSize (300, 520);
@@ -225,10 +226,18 @@ void Sh0tyFZ3Editor::paint (juce::Graphics& g)
         g.fillEllipse (c.x - 12.f, c.y - 12.f, 24.f, 24.f);
         g.setColour (gold);
         g.drawEllipse (c.x - 12.f, c.y - 12.f, 24.f, 24.f, 2.f);
-        juce::ColourGradient jw (juce::Colour (0xffff6a5a), c.x - 3.f, c.y - 3.f, juce::Colour (0xff8e0d12), c.x + 7.f, c.y + 7.f, true);
+        const bool lit = footswitch.getToggleState();
+        if (lit)   // glow halo
+        {
+            g.setGradientFill (juce::ColourGradient (juce::Colour (0xffff5a4a).withAlpha (0.55f), c.x, c.y,
+                                                     juce::Colour (0xffff5a4a).withAlpha (0.f), c.x + 26.f, c.y, true));
+            g.fillEllipse (c.x - 26.f, c.y - 26.f, 52.f, 52.f);
+        }
+        juce::ColourGradient jw (lit ? juce::Colour (0xffff6a5a) : juce::Colour (0xff4a1215), c.x - 3.f, c.y - 3.f,
+                                 lit ? juce::Colour (0xff8e0d12) : juce::Colour (0xff1c0608), c.x + 7.f, c.y + 7.f, true);
         g.setGradientFill (jw);
         g.fillEllipse (c.x - 8.f, c.y - 8.f, 16.f, 16.f);
-        g.setColour (juce::Colours::white.withAlpha (0.6f));
+        g.setColour (juce::Colours::white.withAlpha (lit ? 0.6f : 0.12f));
         g.fillEllipse (c.x - 4.f, c.y - 5.f, 5.f, 3.5f);
         g.setColour (goldHi);
         spaced (g, "CHECK", { (int) c.x - 40, 56, 80, 12 }, 9.f, 0.35f);

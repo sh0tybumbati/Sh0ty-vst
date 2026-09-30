@@ -146,6 +146,7 @@ Sh0tyKTG1Editor::Sh0tyKTG1Editor (Sh0tyKTG1Processor& p)
     sel1.setButtonText ("1"); sel2.setButtonText ("2");
     sel1.onClick = [this] { chAttach.setValueAsCompleteGesture (0.f); };
     sel2.onClick = [this] { chAttach.setValueAsCompleteGesture (1.f); };
+    power.button.onStateChange = [this] { repaint(); };
     chAttach.sendInitialUpdate();
 
     setSize (1000, 288);
@@ -240,12 +241,18 @@ void Sh0tyKTG1Editor::paint (juce::Graphics& g)
     // channel LEDs: lit square-in-circle for the selected channel
     auto led = [&] (int cx, bool lit, juce::Colour lc)
     {
+        if (lit)   // glow
+        {
+            g.setGradientFill (juce::ColourGradient (lc.withAlpha (0.6f), (float) cx, 79.f, lc.withAlpha (0.f), (float) cx + 16.f, 79.f, true));
+            g.fillEllipse ((float) cx - 16.f, 63.f, 32.f, 32.f);
+        }
         g.setColour (cream); g.fillEllipse ((float) cx - 8.f, 71.f, 16.f, 16.f);
         g.setColour (lit ? lc : black.withAlpha (0.25f)); g.fillEllipse ((float) cx - 5.f, 74.f, 10.f, 10.f);
         g.setColour (black); g.drawEllipse ((float) cx - 8.f, 71.f, 16.f, 16.f, 2.f);
     };
-    led (504, ! ch2State, yellow);
-    led (680, ch2State, yellow);
+    const bool powered = power.button.getToggleState();
+    led (504, powered && ! ch2State, yellow);
+    led (680, powered && ch2State, yellow);
 
     // selector title
     text (g, "CHANNEL SELECTOR", { 800, 154, 104, 14 }, 8.f, black, juce::Justification::centred, 0.1f);

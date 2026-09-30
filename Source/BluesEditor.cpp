@@ -169,6 +169,7 @@ Sh0tyBD2Editor::Sh0tyBD2Editor (Sh0tyBD2Processor& p) : AudioProcessorEditor (&p
     addKnob (trim,  "trim",  "TRIM",  true);
     footswitch.setClickingTogglesState (true);
     footswitch.setTooltip ("Bypass footswitch");
+    footswitch.onStateChange = [this] { repaint(); };
     addAndMakeVisible (footswitch);
     footAttach = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment> (proc.apvts, "on", footswitch);
     setSize (300, 540);
@@ -274,9 +275,17 @@ void Sh0tyBD2Editor::paint (juce::Graphics& g)
         g.fillEllipse (c.x - 13.f, c.y - 13.f, 26.f, 26.f);
         g.setColour (bronzeHi);
         g.drawEllipse (c.x - 13.f, c.y - 13.f, 26.f, 26.f, 1.6f);
-        g.setGradientFill (juce::ColourGradient (juce::Colour (0xffff7a66), c.x - 3.f, c.y - 3.f, juce::Colour (0xff8e0d12), c.x + 7.f, c.y + 7.f, true));
+        const bool lit = footswitch.getToggleState();
+        if (lit)   // glow halo
+        {
+            g.setGradientFill (juce::ColourGradient (juce::Colour (0xffff6a55).withAlpha (0.5f), c.x, c.y,
+                                                     juce::Colour (0xffff6a55).withAlpha (0.f), c.x + 28.f, c.y, true));
+            g.fillEllipse (c.x - 28.f, c.y - 28.f, 56.f, 56.f);
+        }
+        g.setGradientFill (juce::ColourGradient (lit ? juce::Colour (0xffff7a66) : juce::Colour (0xff4a1215), c.x - 3.f, c.y - 3.f,
+                                                 lit ? juce::Colour (0xff8e0d12) : juce::Colour (0xff1c0608), c.x + 7.f, c.y + 7.f, true));
         g.fillEllipse (c.x - 8.5f, c.y - 8.5f, 17.f, 17.f);
-        g.setColour (juce::Colours::white.withAlpha (0.55f));
+        g.setColour (juce::Colours::white.withAlpha (lit ? 0.55f : 0.12f));
         g.fillEllipse (c.x - 4.f, c.y - 5.f, 5.f, 3.5f);
         g.setColour (bronzeHi);
         g.setFont (serif (9.f, false));
