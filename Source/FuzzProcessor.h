@@ -31,7 +31,7 @@ private:
     juce::dsp::Oversampling<float> oversampling { 2, kStages,
         juce::dsp::Oversampling<float>::filterHalfBandPolyphaseIIR };
     fz3::FZ3 channels[2];
-    juce::SmoothedValue<float> fuzz, tone, volume, mix;
-    std::atomic<float>* pFuzz, *pTone, *pVolume, *pMix, *pTrim;
+    juce::SmoothedValue<float> onGain, fuzz, tone, volume, mix;
+    std::atomic<float>* pOn, *pFuzz, *pTone, *pVolume, *pMix, *pTrim;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (Sh0tyFZ3Processor)
 };

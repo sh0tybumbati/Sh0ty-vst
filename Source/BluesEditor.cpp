@@ -136,6 +136,29 @@ void NouveauLookAndFeel::drawRotarySlider (juce::Graphics& g, int x, int y, int 
     g.drawEllipse (c.x - 3.5f, c.y - 3.5f, 7.f, 7.f, 1.f);
 }
 
+void NouveauLookAndFeel::drawButtonBackground (juce::Graphics& g, juce::Button& b, const juce::Colour&, bool over, bool)
+{
+    using namespace nouveau;
+    const auto r = b.getLocalBounds().toFloat().reduced (2.f);
+    const float d = juce::jmin (r.getWidth(), r.getHeight());
+    const auto rc = r.withSizeKeepingCentre (d, d);
+    const bool on = b.getToggleState();
+    g.setColour (juce::Colours::black.withAlpha (0.4f));
+    g.fillEllipse (rc.translated (1.5f, 3.f));
+    g.setGradientFill (juce::ColourGradient (bronzeHi, rc.getX(), rc.getY(), bronzeLo, rc.getRight(), rc.getBottom(), false));
+    g.fillEllipse (rc);
+    const auto face = rc.reduced (d * 0.13f);
+    g.setGradientFill (on ? juce::ColourGradient (juce::Colour (0xff3ea0bf), face.getX(), face.getY(), teal, face.getRight(), face.getBottom(), false)
+                          : juce::ColourGradient (juce::Colour (0xff2c3a3a), face.getX(), face.getY(), tealLo, face.getRight(), face.getBottom(), false));
+    g.fillEllipse (face);
+    g.setColour (over ? parch : bronzeHi);
+    g.drawEllipse (face, 1.5f);
+    g.setColour (on ? parch : juce::Colour (0xff8a9a92));
+    auto f = serif (11.f, false); f.setExtraKerningFactor (0.15f);
+    g.setFont (f);
+    g.drawText (on ? "ON" : "OFF", b.getLocalBounds(), juce::Justification::centred);
+}
+
 Sh0tyBD2Editor::Sh0tyBD2Editor (Sh0tyBD2Processor& p) : AudioProcessorEditor (&p), proc (p)
 {
     setLookAndFeel (&laf);
@@ -144,6 +167,10 @@ Sh0tyBD2Editor::Sh0tyBD2Editor (Sh0tyBD2Processor& p) : AudioProcessorEditor (&p
     addKnob (tone,  "tone",  "TONE",  false);
     addKnob (mix,   "mix",   "MIX",   true);
     addKnob (trim,  "trim",  "TRIM",  true);
+    footswitch.setClickingTogglesState (true);
+    footswitch.setTooltip ("Bypass footswitch");
+    addAndMakeVisible (footswitch);
+    footAttach = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment> (proc.apvts, "on", footswitch);
     setSize (300, 540);
 }
 
@@ -181,6 +208,7 @@ void Sh0tyBD2Editor::resized()
     place (tone,  { 150 - 38, 178, 76, 76 }, 18);
     place (mix,   { 66, 448, sm, sm }, 16);
     place (trim,  { 300 - 66 - sm, 448, sm, sm }, 16);
+    footswitch.setBounds (150 - 26, 456, 52, 52);
 }
 
 void Sh0tyBD2Editor::paint (juce::Graphics& g)

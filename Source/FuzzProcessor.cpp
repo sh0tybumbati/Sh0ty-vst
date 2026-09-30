@@ -15,12 +15,14 @@ Sh0tyFZ3Processor::Sh0tyFZ3Processor()
                   juce::NormalisableRange<float> (0.f, 1.f, 0.001f), def)); };
           add ("fuzz", "Fuzz", 0.7f); add ("tone", "Tone", 0.5f);
           add ("volume", "Volume", 0.5f); add ("mix", "Mix", 1.f);
+          p.push_back (std::make_unique<juce::AudioParameterBool> (juce::ParameterID { "on", 1 }, "On", true));
           p.push_back (std::make_unique<juce::AudioParameterFloat> (juce::ParameterID { "trim", 1 }, "Input Trim (dB)", juce::NormalisableRange<float> (-24.f, 24.f, 0.1f), 0.f));
           return juce::AudioProcessorValueTreeState::ParameterLayout { p.begin(), p.end() };
       }())
 {
     pFuzz = apvts.getRawParameterValue ("fuzz");   pTone = apvts.getRawParameterValue ("tone");
     pVolume = apvts.getRawParameterValue ("volume"); pMix = apvts.getRawParameterValue ("mix"); pTrim = apvts.getRawParameterValue ("trim");
+    pOn = apvts.getRawParameterValue ("on");
 }
 
 bool Sh0tyFZ3Processor::isBusesLayoutSupported (const BusesLayout& l) const
@@ -35,9 +37,10 @@ void Sh0tyFZ3Processor::prepareToPlay (double sr, int block)
     oversampling.reset();
     setLatencySamples ((int) std::round (oversampling.getLatencyInSamples()));
     for (auto& c : channels) c.prepare ((float) (sr * (1 << kStages)));
-    for (auto* s : { &fuzz, &tone, &volume, &mix }) s->reset (sr, 0.03);
+    for (auto* s : { &onGain, &fuzz, &tone, &volume, &mix }) s->reset (sr, 0.03);
     fuzz.setCurrentAndTargetValue (*pFuzz); tone.setCurrentAndTargetValue (*pTone);
     volume.setCurrentAndTargetValue (*pVolume); mix.setCurrentAndTargetValue (*pMix);
+    onGain.setCurrentAndTargetValue (pOn->load() > 0.5f ? 1.f : 0.f);
 }
 
 void Sh0tyFZ3Processor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer&)
@@ -48,7 +51,8 @@ void Sh0tyFZ3Processor::processBlock (juce::AudioBuffer<float>& buffer, juce::Mi
     volume.setTargetValue (*pVolume); mix.setTargetValue (*pMix);
     const float trimLin = juce::Decibels::decibelsToGain (pTrim->load());
     fz3::Params prm; prm.trim = trimLin;
-    prm.fuzz = fuzz.skip (n); prm.tone = tone.skip (n); prm.volume = volume.skip (n); prm.mix = mix.skip (n);
+    prm.fuzz = fuzz.skip (n); prm.tone = tone.skip (n); prm.volume = volume.skip (n); onGain.setTargetValue (pOn->load() > 0.5f ? 1.f : 0.f);
+    prm.mix = mix.skip (n) * onGain.skip (n);
 
     juce::dsp::AudioBlock<float> block (buffer);
     auto sub = block.getSubsetChannelBlock (0, (size_t) nCh);

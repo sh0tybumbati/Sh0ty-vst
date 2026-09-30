@@ -31,7 +31,7 @@ private:
     juce::dsp::Oversampling<float> oversampling { 2, kStages,
         juce::dsp::Oversampling<float>::filterHalfBandPolyphaseIIR };
     bd2::BD2 channels[2];
-    juce::SmoothedValue<float> gain, tone, level, mix;
-    std::atomic<float>* pGain, *pTone, *pLevel, *pMix, *pTrim;
+    juce::SmoothedValue<float> onGain, gain, tone, level, mix;
+    std::atomic<float>* pOn, *pGain, *pTone, *pLevel, *pMix, *pTrim;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (Sh0tyBD2Processor)
 };

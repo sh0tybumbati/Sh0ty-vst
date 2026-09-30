@@ -106,6 +106,29 @@ void DecoLookAndFeel::drawRotarySlider (juce::Graphics& g, int x, int y, int w, 
     g.fillEllipse (c.x - 3.f, c.y - 3.f, 6.f, 6.f);
 }
 
+void DecoLookAndFeel::drawButtonBackground (juce::Graphics& g, juce::Button& b, const juce::Colour&, bool over, bool)
+{
+    using namespace deco;
+    const auto r = b.getLocalBounds().toFloat().reduced (2.f);
+    const float d = juce::jmin (r.getWidth(), r.getHeight());
+    const auto rc = r.withSizeKeepingCentre (d, d);
+    const bool on = b.getToggleState();
+    g.setColour (juce::Colours::black.withAlpha (0.5f));
+    g.fillEllipse (rc.translated (1.5f, 3.f));
+    g.setGradientFill (juce::ColourGradient (goldHi, rc.getX(), rc.getY(), goldLo, rc.getRight(), rc.getBottom(), false));
+    g.fillEllipse (rc);
+    const auto face = rc.reduced (d * 0.12f);
+    g.setGradientFill (on ? juce::ColourGradient (goldHi, face.getX(), face.getY(), gold, face.getRight(), face.getBottom(), false)
+                          : juce::ColourGradient (juce::Colour (0xff2a3438), face.getX(), face.getY(), juce::Colour (0xff050809), face.getRight(), face.getBottom(), false));
+    g.fillEllipse (face);
+    g.setColour (over ? cream : goldLo);
+    g.drawEllipse (face, 1.5f);
+    g.setColour (on ? ink : goldHi);
+    juce::Font f (juce::FontOptions (11.f, juce::Font::bold)); f.setExtraKerningFactor (0.2f);
+    g.setFont (f);
+    g.drawText (on ? "ON" : "OFF", b.getLocalBounds(), juce::Justification::centred);
+}
+
 Sh0tyFZ3Editor::Sh0tyFZ3Editor (Sh0tyFZ3Processor& p) : AudioProcessorEditor (&p), proc (p)
 {
     setLookAndFeel (&laf);
@@ -114,6 +137,10 @@ Sh0tyFZ3Editor::Sh0tyFZ3Editor (Sh0tyFZ3Processor& p) : AudioProcessorEditor (&p
     addKnob (tone,  "tone",   "TONE",  false);
     addKnob (mix,   "mix",    "MIX",   true);
     addKnob (trim,  "trim",   "TRIM",  true);
+    footswitch.setClickingTogglesState (true);
+    footswitch.setTooltip ("Bypass footswitch");
+    addAndMakeVisible (footswitch);
+    footAttach = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment> (proc.apvts, "on", footswitch);
     setSize (300, 520);
 }
 
@@ -151,6 +178,7 @@ void Sh0tyFZ3Editor::resized()
     place (tone,  { 150 - 38, 138, 76, 76 }, 18);
     place (mix,   { 58, 424, sm, sm }, 16);
     place (trim,  { 300 - 58 - sm, 424, sm, sm }, 16);
+    footswitch.setBounds (150 - 28, 428, 56, 56);
 }
 
 void Sh0tyFZ3Editor::paint (juce::Graphics& g)

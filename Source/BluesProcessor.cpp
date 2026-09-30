@@ -15,6 +15,7 @@ Sh0tyBD2Processor::Sh0tyBD2Processor()
                   juce::NormalisableRange<float> (0.f, 1.f, 0.001f), def)); };
           add ("gain", "Gain", 0.5f); add ("tone", "Tone", 0.5f);
           add ("level", "Level", 0.5f); add ("mix", "Mix", 1.f);
+          p.push_back (std::make_unique<juce::AudioParameterBool> (juce::ParameterID { "on", 1 }, "On", true));
           p.push_back (std::make_unique<juce::AudioParameterFloat> (juce::ParameterID { "trim", 1 }, "Input Trim (dB)",
               juce::NormalisableRange<float> (-24.f, 24.f, 0.1f), 0.f));
           return juce::AudioProcessorValueTreeState::ParameterLayout { p.begin(), p.end() };
@@ -23,6 +24,7 @@ Sh0tyBD2Processor::Sh0tyBD2Processor()
     pGain = apvts.getRawParameterValue ("gain"); pTone = apvts.getRawParameterValue ("tone");
     pLevel = apvts.getRawParameterValue ("level"); pMix = apvts.getRawParameterValue ("mix");
     pTrim = apvts.getRawParameterValue ("trim");
+    pOn = apvts.getRawParameterValue ("on");
 }
 
 bool Sh0tyBD2Processor::isBusesLayoutSupported (const BusesLayout& l) const
@@ -37,9 +39,10 @@ void Sh0tyBD2Processor::prepareToPlay (double sr, int block)
     oversampling.reset();
     setLatencySamples ((int) std::round (oversampling.getLatencyInSamples()));
     for (auto& c : channels) c.prepare ((float) (sr * (1 << kStages)));
-    for (auto* s : { &gain, &tone, &level, &mix }) s->reset (sr, 0.03);
+    for (auto* s : { &onGain, &gain, &tone, &level, &mix }) s->reset (sr, 0.03);
     gain.setCurrentAndTargetValue (*pGain); tone.setCurrentAndTargetValue (*pTone);
     level.setCurrentAndTargetValue (*pLevel); mix.setCurrentAndTargetValue (*pMix);
+    onGain.setCurrentAndTargetValue (pOn->load() > 0.5f ? 1.f : 0.f);
 }
 
 void Sh0tyBD2Processor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer&)
@@ -49,7 +52,8 @@ void Sh0tyBD2Processor::processBlock (juce::AudioBuffer<float>& buffer, juce::Mi
     gain.setTargetValue (*pGain); tone.setTargetValue (*pTone);
     level.setTargetValue (*pLevel); mix.setTargetValue (*pMix);
     bd2::Params prm;
-    prm.gain = gain.skip (n); prm.tone = tone.skip (n); prm.level = level.skip (n); prm.mix = mix.skip (n);
+    prm.gain = gain.skip (n); prm.tone = tone.skip (n); prm.level = level.skip (n); onGain.setTargetValue (pOn->load() > 0.5f ? 1.f : 0.f);
+    prm.mix = mix.skip (n) * onGain.skip (n);
     prm.trim = juce::Decibels::decibelsToGain (pTrim->load());
 
     juce::dsp::AudioBlock<float> block (buffer);
