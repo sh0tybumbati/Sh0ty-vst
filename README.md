@@ -1,6 +1,6 @@
-# Sh0ty KTG-1
+# Sh0ty VST plugins
 
-A tube-preamp plugin (VST3 / AU / Standalone) inspired by the Seymour Duncan KTG-1.
+Two plugins: **Sh0ty FZ-3 Fuzz** (Fuzz, Tone, Volume, Mix; inspired by the Boss FZ-3) and **Sh0ty KTG-1** — a tube-preamp plugin (VST3 / AU / Standalone) inspired by the Seymour Duncan KTG-1.
 Built with JUCE. It is a generic triode-style model (asymmetric saturation, coupling
 caps, 4x oversampling), **not** a component-level model of the real circuit.
 
