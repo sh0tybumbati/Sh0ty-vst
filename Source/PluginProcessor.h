@@ -28,7 +28,6 @@ public:
 
     void getStateInformation (juce::MemoryBlock&) override;
     void setStateInformation (const void*, int) override;
-    int getLatencySamplesInt() const;
 
     juce::AudioProcessorValueTreeState apvts;
 
@@ -40,8 +39,10 @@ private:
         juce::dsp::Oversampling<float>::filterHalfBandPolyphaseIIR };
     ktg1::KTG1 channels[2];
 
-    juce::SmoothedValue<float> drive, tone, level, bright, mix;
-    std::atomic<float>* pDrive, *pTone, *pLevel, *pBright, *pMix;
+    // continuous params are smoothed per block; switches are read directly
+    juce::SmoothedValue<float> bass, mid, treble, od1, master1, od2, master2, output;
+    std::atomic<float>* pBass, *pMid, *pTreble, *pOd1, *pMaster1, *pOd2, *pMaster2, *pOutput, *pTrim;
+    std::atomic<float>* pBoost1, *pBoost2, *pCrunch2, *pCh2, *pOn;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (Sh0tyKTG1Processor)
 };

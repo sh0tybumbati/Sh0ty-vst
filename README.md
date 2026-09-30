@@ -4,7 +4,7 @@ Three plugins: **Sh0ty FZ-3 Fuzz** (Fuzz, Tone, Volume, Mix; inspired by the Bos
 Built with JUCE. It is a generic triode-style model (asymmetric saturation, coupling
 caps, 4x oversampling), **not** a component-level model of the real circuit.
 
-Controls: Drive, Tone, Level, Bright, Mix.
+
 
 ## Build
     cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
@@ -40,6 +40,15 @@ JFET input buffer, two PNP gain stages with the dual-gang Gain pot, 1SS133 diode
 and an op-amp tone stage. Transistor stages are gain + asymmetric rail clipping, diodes are a soft-knee
 limiter, the tone stage is a +/-10 dB tilt at 1 kHz, and the Gain pot's split across the two stages is an
 estimate. FET bypass switching is not modelled. Art-nouveau interface with original artwork.
+
+## KTG-1 tube preamp
+![KTG-1 editor](docs/ktg1-ui.png)
+
+Two-channel tube guitar preamp with the control layout of the real rack unit: Input trim, shared
+Bass / Mid / Treble, Channel 1 (Overdrive with pull boost, Master), Channel 2 (Overdrive with pull boost,
+Master with pull crunch), Output, channel selector and On/Off. There is no schematic behind it, so the sound
+is an "inspired by" model of generic triode-stage behaviour; the pull-boost and pull-crunch voicings and
+the signal order are estimates. Bauhaus interface with original artwork.
 
 ## FZ-3 model
 The FZ-3 DSP follows the signal path of the "Boss FZ3" schematic (JFET buffers, Q1 treble shelf,

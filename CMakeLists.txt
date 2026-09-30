@@ -30,7 +30,9 @@ juce_add_plugin(Sh0tyKTG1
 
 target_sources(Sh0tyKTG1 PRIVATE
     Source/PluginProcessor.cpp
-    Source/PluginProcessor.h)
+    Source/PluginProcessor.h
+    Source/KtgEditor.cpp
+    Source/KtgEditor.h)
 
 target_compile_definitions(Sh0tyKTG1 PUBLIC
     JUCE_WEB_BROWSER=0
@@ -100,4 +102,8 @@ if(KTG1_BUILD_UI_SNAPSHOT)
     target_sources(BD2Snapshot PRIVATE tests/snapshot_bd2.cpp Source/BluesProcessor.cpp Source/BluesEditor.cpp)
     target_compile_definitions(BD2Snapshot PRIVATE JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0 JUCE_STANDALONE_APPLICATION=1)
     target_link_libraries(BD2Snapshot PRIVATE juce::juce_audio_utils juce::juce_dsp juce::juce_recommended_config_flags)
+    juce_add_console_app(KTG1Snapshot PRODUCT_NAME "KTG1Snapshot")
+    target_sources(KTG1Snapshot PRIVATE tests/snapshot_ktg.cpp Source/PluginProcessor.cpp Source/KtgEditor.cpp)
+    target_compile_definitions(KTG1Snapshot PRIVATE JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0 JUCE_STANDALONE_APPLICATION=1)
+    target_link_libraries(KTG1Snapshot PRIVATE juce::juce_audio_utils juce::juce_dsp juce::juce_recommended_config_flags)
 endif()

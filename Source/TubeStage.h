@@ -2,12 +2,19 @@
 #include <algorithm>
 #include <cmath>
 
-// JUCE-free DSP for the KTG-1 style tube preamp. Kept header-only so it can be
-// unit-tested without the plugin framework.
+// JUCE-free DSP for the KTG-1 style two-channel tube guitar preamp.
 //
-// NOTE: this is an "inspired by" model built from generic triode-stage
-// behaviour (asymmetric soft clipping, coupling caps, grid/Miller low-pass),
-// not a component-level model of the real KTG-1 circuit.
+// Panel-derived structure (from photos of the real unit):
+//   INPUT -> shared BASS / MID / TREBLE
+//   CHANNEL 1: OVERDRIVE (pull boost), MASTER
+//   CHANNEL 2: OVERDRIVE (pull boost), MASTER (pull crunch)
+//   OUTPUT, CHANNEL SELECTOR, ON/OFF
+//
+// There is no schematic behind this, so it is an "inspired by" model built from
+// generic triode-stage behaviour (asymmetric saturation, coupling caps, Miller
+// low-pass), not a component-level model of the real circuit. The signal order
+// (gain stages -> master -> shared tone stack -> output) and the boost / crunch
+// voicings are estimates.
 namespace ktg1
 {
 struct OnePole
@@ -47,58 +54,126 @@ struct TriodeStage
     }
 };
 
+// RBJ biquad (transposed direct form II).
+struct Biquad
+{
+    float b0 = 1.f, b1 = 0.f, b2 = 0.f, a1 = 0.f, a2 = 0.f, z1 = 0.f, z2 = 0.f;
+    void reset() { z1 = z2 = 0.f; }
+    float process (float x)
+    {
+        const float y = b0 * x + z1;
+        z1 = b1 * x - a1 * y + z2;
+        z2 = b2 * x - a2 * y;
+        return y;
+    }
+    void set (float nb0, float nb1, float nb2, float a0, float na1, float na2)
+    {
+        b0 = nb0 / a0; b1 = nb1 / a0; b2 = nb2 / a0; a1 = na1 / a0; a2 = na2 / a0;
+    }
+    void lowShelf (float fs, float f, float dB)
+    {
+        const float A = std::pow (10.f, dB / 40.f), w = 2.f * 3.14159265f * f / fs;
+        const float cw = std::cos (w), alpha = std::sin (w) / 2.f * std::sqrt (2.f), t = 2.f * std::sqrt (A) * alpha;
+        set (A * ((A + 1) - (A - 1) * cw + t), 2 * A * ((A - 1) - (A + 1) * cw), A * ((A + 1) - (A - 1) * cw - t),
+             (A + 1) + (A - 1) * cw + t, -2 * ((A - 1) + (A + 1) * cw), (A + 1) + (A - 1) * cw - t);
+    }
+    void highShelf (float fs, float f, float dB)
+    {
+        const float A = std::pow (10.f, dB / 40.f), w = 2.f * 3.14159265f * f / fs;
+        const float cw = std::cos (w), alpha = std::sin (w) / 2.f * std::sqrt (2.f), t = 2.f * std::sqrt (A) * alpha;
+        set (A * ((A + 1) + (A - 1) * cw + t), -2 * A * ((A - 1) + (A + 1) * cw), A * ((A + 1) + (A - 1) * cw - t),
+             (A + 1) - (A - 1) * cw + t, 2 * ((A - 1) - (A + 1) * cw), (A + 1) - (A - 1) * cw - t);
+    }
+    void peak (float fs, float f, float q, float dB)
+    {
+        const float A = std::pow (10.f, dB / 40.f), w = 2.f * 3.14159265f * f / fs;
+        const float cw = std::cos (w), alpha = std::sin (w) / (2.f * q);
+        set (1 + alpha * A, -2 * cw, 1 - alpha * A, 1 + alpha / A, -2 * cw, 1 - alpha / A);
+    }
+};
+
 struct Params
 {
-    float drive  = 0.5f;  // 0..1
-    float tone   = 0.5f;  // 0..1  (0 = dark, 1 = bright)
-    float level  = 0.5f;  // 0..1
-    float bright = 0.f;   // 0..1  pre-clip presence boost
-    float mix    = 1.f;   // 0..1  dry/wet
+    float bass = 0.5f, mid = 0.5f, treble = 0.5f;   // 0..1, 0.5 = flat
+    float od1 = 0.5f, master1 = 0.5f;               // channel 1
+    float od2 = 0.5f, master2 = 0.5f;               // channel 2
+    float output = 0.5f;
+    float trim = 1.f;                               // linear input trim
+    bool  boost1 = false, boost2 = false, crunch2 = false;
+    bool  ch2 = false;                              // false = channel 1
+    bool  on = true;
 };
 
 class KTG1
 {
 public:
-    // Runs at the oversampled rate.
     void prepare (float oversampledRate)
     {
         fs = oversampledRate;
-        s1.prepare (fs); s2.prepare (fs);
-        brightLp.setCutoff (2200.f, fs);
-        toneLp.setCutoff (900.f, fs);
+        for (auto* s : { &s11, &s12, &s21, &s22, &s23 }) s->prepare (fs);
         inHp.setCutoff (35.f, fs);
+        chSmooth.setCutoff (60.f, fs);
+        chTarget = 0.f;
         reset();
+        cached = false;
     }
-    void reset() { s1.reset(); s2.reset(); brightLp.reset(); toneLp.reset(); inHp.reset(); }
-
-    float process (float in, const Params& p)
+    void reset()
     {
-        float x = inHp.hp (in);
-
-        const float hi = x - brightLp.lp (x);
-        x += hi * p.bright * 1.5f;
-
-        const float g1 = 1.f + 14.f * p.drive * p.drive;
-        const float g2 = 1.f + 5.f * p.drive;
-        float y = s1.process (x, g1);
-        y = s2.process (y * 0.7f, g2);
-
-        // tilt tone: lows vs highs around ~900 Hz
-        const float lo = toneLp.lp (y), hiT = y - lo;
-        y = lo * (1.4f - 0.8f * p.tone) + hiT * (0.6f + 0.8f * p.tone);
-
-        const float out = y * levelGain (p.level);
-        return in * (1.f - p.mix) + out * p.mix;
+        for (auto* s : { &s11, &s12, &s21, &s22, &s23 }) s->reset();
+        inHp.reset(); chSmooth.reset(); env = 0.f;
+        bassBq.reset(); midBq.reset(); trebBq.reset();
     }
 
-    static float levelGain (float lvl)   // -inf..+12 dB, unity ~0.6
+    void setParams (const Params& np)
     {
-        return lvl <= 0.f ? 0.f : std::pow (10.f, (lvl - 0.6f) * 30.f / 20.f);
+        if (!cached || np.bass != p.bass) bassBq.lowShelf (fs, 110.f, (np.bass - 0.5f) * 24.f);
+        if (!cached || np.mid != p.mid)   midBq.peak (fs, 700.f, 0.8f, (np.mid - 0.5f) * 20.f);
+        if (!cached || np.treble != p.treble) trebBq.highShelf (fs, 3200.f, (np.treble - 0.5f) * 24.f);
+        p = np;
+        cached = true;
+        chTarget = p.ch2 ? 1.f : 0.f;
     }
+
+    float process (float in)
+    {
+        if (!p.on) return in;
+
+        const float x = inHp.hp (in * p.trim);
+
+        // --- Channel 1: cleaner, two stages, pull-boost adds gain ---
+        const float b1 = p.boost1 ? 2.4f : 1.f;
+        float a = s11.process (x, (1.f + 9.f * p.od1 * p.od1) * b1);
+        a = s12.process (a * 0.6f, 1.5f + 3.f * p.od1 * (p.boost1 ? 1.6f : 1.f));
+        a *= masterGain (p.master1);
+
+        // --- Channel 2: hotter, three stages, pull-boost adds gain, pull-crunch adds power-stage squash ---
+        const float b2 = p.boost2 ? 2.4f : 1.f;
+        float b = s21.process (x, (1.f + 16.f * p.od2 * p.od2) * b2);
+        b = s22.process (b * 0.6f, 2.f + 7.f * p.od2 * (p.boost2 ? 1.5f : 1.f));
+        b = s23.process (b * 0.6f, 1.5f + 3.f * p.od2);
+        b *= masterGain (p.master2);
+        if (p.crunch2)
+        {
+            env = std::max (std::fabs (b), env * 0.9995f);          // slow "sag"
+            b = std::tanh (b * 1.8f / (1.f + 0.5f * env)) * 0.6f;
+        }
+
+        const float w = chSmooth.lp (chTarget);
+        float y = a * (1.f - w) + b * w;
+
+        y = trebBq.process (midBq.process (bassBq.process (y)));
+        return y * outputGain (p.output);
+    }
+
+    static float masterGain (float m) { return 3.f * m * m; }
+    static float outputGain (float o) { return 4.f * o * o; }
 
 private:
-    float fs = 48000.f;
-    TriodeStage s1, s2;
-    OnePole brightLp, toneLp, inHp;
+    float fs = 48000.f, env = 0.f, chTarget = 0.f;
+    bool cached = false;
+    Params p;
+    TriodeStage s11, s12, s21, s22, s23;
+    OnePole inHp, chSmooth;
+    Biquad bassBq, midBq, trebBq;
 };
 } // namespace ktg1
