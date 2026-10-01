@@ -1,9 +1,11 @@
 #pragma once
 #include "FfProcessor.h"
 
-// FF-1 editor: a psychedelic Sasquatch marker drawing (Assets/sasquatch.jpg, cropped to the pedal) with the controls
-// built into his face. VOLUME and FUZZ are his eyes, the Ge/Si switch sits in his mouth, the status light is his third
-// eye. Same pedal spec as the others (320 x 548, 80 px knobs, 50 px small knob, 64 px stomp, 22 px light).
+// FF-1 editor: the supplied psychedelic Sasquatch poster (Assets/fuzzface.jpg, same proportions as the pedal) with the
+// controls placed on the lettering already painted into it: VOLUME and FUZZ are eyeball dials over the two swirl orbs, TRIM
+// is on his chest, the Ge / Si switch sits on the tree under its labels, the stomp button is between his feet and the
+// status light is a star in the rainbow. Same pedal spec as the others (320 x 548, 80 px knobs, 50 px small knob, 64 px
+// stomp, 22 px light).
 class MarkerLookAndFeel : public juce::LookAndFeel_V4
 {
 public:
@@ -26,7 +28,6 @@ public:
 private:
     struct Knob { juce::Slider slider; std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> attach; };
     void addKnob (Knob&, const juce::String& id, juce::Colour accent, bool small);
-    void renderOverlay();
     void timerCallback() override;
 
     Sh0tyFF1Processor& proc;
@@ -36,7 +37,7 @@ private:
     juce::TextButton footswitch;
     std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> footAttach, siAttach;
 
-    juce::Image art, overlay;             // the drawing, and the static lettering / border on top of it
+    juce::Image art;                      // the finished artwork, lettering and frame included
     float level = 0.f, phase = 0.f;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (Sh0tyFF1Editor)
 };

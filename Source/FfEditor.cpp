@@ -160,12 +160,17 @@ void MarkerLookAndFeel::drawToggleButton (juce::Graphics& g, juce::ToggleButton&
     g.setColour (ink); g.fillEllipse (thumb.getCentreX() - td * 0.09f, thumb.getCentreY() - td * 0.09f, td * 0.18f, td * 0.18f);
 }
 
+namespace
+{
+const juce::Point<int> kVolume { 56, 134 }, kFuzz { 265, 134 }, kLight { 184, 124 };
+}
+
 //==============================================================================
 Sh0tyFF1Editor::Sh0tyFF1Editor (Sh0tyFF1Processor& p) : AudioProcessorEditor (&p), proc (p)
 {
     using namespace sas;
     setLookAndFeel (&laf);
-    art = juce::ImageCache::getFromMemory (BinaryData::sasquatch_jpg, BinaryData::sasquatch_jpgSize);
+    art = juce::ImageCache::getFromMemory (BinaryData::fuzzface_jpg, BinaryData::fuzzface_jpgSize);
     addKnob (volume, "volume", orange,  false);     // the left eye
     addKnob (fuzz,   "fuzz",   magenta, false);     // the right eye
     addKnob (trim,   "trim",   lime,    true);
@@ -204,48 +209,18 @@ void Sh0tyFF1Editor::timerCallback()
     const float target = juce::jlimit (0.f, 1.f, (db + 40.f) / 40.f);
     level += (target - level) * (target > level ? 0.5f : 0.1f);
     phase += 0.03f + level * 0.2f;
-    repaint (40, 150, 240, 120);      // the glow around the eyes
+    repaint (0, 60, 320, 140);        // the glow around the orbs
 }
 
 void Sh0tyFF1Editor::resized()
 {
-    volume.slider.setBounds ({ 65, 170, 80, 80 });      // centred on his left eye
-    fuzz.slider.setBounds   ({ 177, 179, 80, 80 });     // centred on his right eye
-    silicon.setBounds       ({ 160 - 48, 324, 96, 48 });// in his open mouth
-    trim.slider.setBounds   ({ 218, 446, 50, 50 });
-    footswitch.setBounds    ({ 160 - 32, 436, 64, 64 });
-    renderOverlay();
-}
-
-//------------------------------------------------------------------------------ static lettering + border
-void Sh0tyFF1Editor::renderOverlay()
-{
-    using namespace sas;
-    const int W = getWidth(), H = getHeight(), sc = 2;
-    overlay = juce::Image (juce::Image::ARGB, W * sc, H * sc, true);
-    juce::Graphics g (overlay);
-    g.addTransform (juce::AffineTransform::scale ((float) sc));
-    juce::Random rng (1969);
-
-    // wobbly marker border, a different colour on each side
-    {
-        const float m = 7.f;
-        const juce::Point<float> corners[] = { { m, m }, { (float) W - m, m }, { (float) W - m, (float) H - m }, { m, (float) H - m } };
-        for (int s = 0; s < 4; ++s)
-        {
-            std::vector<juce::Point<float>> pts;
-            const auto p0 = corners[s], p1 = corners[(s + 1) % 4];
-            for (int k = 0; k <= 9; ++k) { auto pt = p0 + (p1 - p0) * ((float) k / 9.f); pt.x += (rng.nextFloat() - 0.5f) * 3.f; pt.y += (rng.nextFloat() - 0.5f) * 3.f; pts.push_back (pt); }
-            stroke (g, smoothOpen (pts), rainbow (s * 2 + 1), 6.f);
-        }
-    }
-    lettering (g, "FF-1", { 20.f, 64.f }, 50.f, lime, false, magenta);
-    lettering (g, "FUZZ", { 176.f, 62.f }, 30.f, cyan, false);
-
-    lettering (g, "VOLUME", { 105.f, 268.f }, 14.f, orange, true, juce::Colours::transparentBlack, false);
-    lettering (g, "FUZZ",   { 217.f, 277.f }, 14.f, magenta, true, juce::Colours::transparentBlack, false);
-    lettering (g, "TRIM",   { 243.f, 512.f }, 11.f, lime, true, juce::Colours::transparentBlack, false);
-    lettering (g, "SH0TY",  { 160.f, (float) H - 22.f }, 15.f, yellow, true);
+    // positions follow the lettering painted into the artwork: VOLUME / FUZZ sit under the two swirl orbs, TRIM on his
+    // chest, Ge / Si above the switch on the tree, the stomp button between his feet
+    volume.slider.setBounds ({ kVolume.x - 40, kVolume.y - 40, 80, 80 });
+    fuzz.slider.setBounds   ({ kFuzz.x - 40, kFuzz.y - 40, 80, 80 });
+    silicon.setBounds       ({ 12, 280, 84, 40 });
+    trim.slider.setBounds   ({ 161 - 25, 270 - 25, 50, 50 });
+    footswitch.setBounds    ({ 172 - 32, 424 - 32, 64, 64 });
 }
 
 //------------------------------------------------------------------------------ paint
@@ -256,18 +231,17 @@ void Sh0tyFF1Editor::paint (juce::Graphics& g)
     const auto bounds = getLocalBounds().toFloat();
     g.drawImage (art, bounds);
 
-    // the eyes glow with the signal
-    for (auto eye : { std::make_pair (juce::Point<float> (105.f, 210.f), orange), std::make_pair (juce::Point<float> (217.f, 219.f), magenta) })
+    // the two orbs glow with the signal
+    for (auto eye : { std::make_pair (kVolume.toFloat(), orange), std::make_pair (kFuzz.toFloat(), magenta) })
     {
         const float a = 0.10f + 0.55f * level, r = 50.f + 6.f * std::sin (phase);
         g.setGradientFill (juce::ColourGradient (eye.second.withAlpha (a), eye.first.x, eye.first.y, eye.second.withAlpha (0.f), eye.first.x + r, eye.first.y, true));
         g.fillEllipse (eye.first.x - r, eye.first.y - r, r * 2, r * 2);
     }
-    g.drawImage (overlay, bounds);
 
-    // the third eye on his forehead is the status light: lit when the pedal is on
+    // status light: a painted star in the rainbow, lit when the pedal is on
     const bool lit = footswitch.getToggleState();
-    const juce::Point<float> eye (161.f, 124.f);
+    const juce::Point<float> eye (kLight.toFloat());
     if (lit)
     {
         g.setGradientFill (juce::ColourGradient (lime.withAlpha (0.8f), eye.x, eye.y, lime.withAlpha (0.f), eye.x + 30.f, eye.y, true));

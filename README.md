@@ -8,7 +8,7 @@ Five guitar-pedal / preamp plugins (VST3, AU on macOS, and Standalone), built wi
 | **Sh0ty FZ-3 Fuzz** | Boss FZ-3 | Art deco |
 | **Sh0ty BD-2 Blues Driver** | Boss BD-2 | Art nouveau |
 | **Sh0ty GS-424 Gain Stage** | Tascam Portastudio 424 MKIII input stage + Baxandall EQ | Minimal street art |
-| **Sh0ty FF-1 Fuzz** | Classic two-transistor PNP germanium fuzz (with a germanium / silicon switch) | Psychedelic Sasquatch marker drawing |
+| **Sh0ty FF-1 Fuzz** | Classic two-transistor PNP germanium fuzz (with a germanium / silicon switch) | Psychedelic Sasquatch poster art |
 | **Sh0ty RE-201 Space Echo** | Roland RE-201 Space Echo (tape echo + spring reverb), rack unit | Retro-futuristic wasteland vault |
 
 These are "inspired by" models, not component-level circuit simulations. Interfaces are original artwork.
@@ -59,8 +59,10 @@ also uses a bias trimmer value); germanium biases to the textbook -0.65 V / -4.9
 **Volume**, **Fuzz**, **Ge / Si**, footswitch and a small input **Trim** (it is a level-sensitive circuit, so trim
 matters). Simplifications: ideal battery (no sag), the guitar is a plain 6k8 source resistor (no pickup inductance),
 a gentle roll-off stands in for transistor bandwidth, no temperature drift. It runs at 2x oversampling because the
-solve is the expensive part. The artwork is a marker drawing (`Assets/sasquatch.jpg`) with the controls built into
-his face: the knobs are his eyes, the switch is in his mouth, and the status light is his third eye.
+solve is the expensive part. The artwork is a supplied psychedelic Sasquatch poster (`Assets/fuzzface.jpg`) with the controls placed on the lettering
+painted into it: eyeball dials for VOLUME and FUZZ over the two swirl orbs, TRIM on his chest, the Ge / Si switch on the
+tree, the stomp button between his feet and a star in the rainbow as the status light. The artwork is the user's own
+supplied image; its rights are theirs to sort out before the plugin is shared.
 
 ## RE-201 Space Echo
 ![RE-201](docs/re201-ui.png)

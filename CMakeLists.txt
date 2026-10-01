@@ -18,7 +18,7 @@ FetchContent_Declare(JUCE
 FetchContent_MakeAvailable(JUCE)
 
 # Artwork compiled into the binaries (the FF-1's marker drawing).
-juce_add_binary_data(Sh0tyAssets SOURCES Assets/sasquatch.jpg)
+juce_add_binary_data(Sh0tyAssets SOURCES Assets/fuzzface.jpg)
 set_target_properties(Sh0tyAssets PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 # Format list: VST3 + Standalone everywhere, AU on macOS.
