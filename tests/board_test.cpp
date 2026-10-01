@@ -73,6 +73,25 @@ int main()
     CHECK (board.cables.size() < before && ! board.isConnected (fz, gs), "removing a unit removes its cables");
     { const float broken = runBlocks (board, 0.2f, 20); std::printf ("      broken-chain peak: %g\n", broken); CHECK (broken < 1.0e-6f, "chain broken: silence (only a decaying filter tail remains)"); }
 
+    // the FF-1 works on the board too, and its germanium / silicon switch survives a save and load
+    {
+        BoardModel b2; b2.graph.setPlayConfigDetails (2, 2, 48000.0, 512); b2.graph.prepareToPlay (48000.0, 512);
+        dynamic_cast<InputTerminal*> (b2.processorFor (BoardModel::kInputId))->muted = false;
+        const int ff = b2.addModule (ModuleType::Ff1, { 50, 0 });
+        CHECK (b2.connect (BoardModel::kInputId, ff) && b2.connect (ff, BoardModel::kOutputId), "Guitar In -> FF-1 -> Output");
+        const float fuzzed = runBlocks (b2, 0.1f, 80);
+        CHECK (fuzzed > 0.01f && std::fabs (fuzzed - 0.1f) > 0.005f, "FF-1 on the board processes the signal");
+        b2.processorFor (ff)->getParameters();   // (touch the parameter tree)
+        for (auto* prm : b2.processorFor (ff)->getParameters())
+            if (prm->getName (32).startsWith ("Silicon")) prm->setValueNotifyingHost (1.f);
+        auto xml2 = b2.toXml();
+        BoardModel b3; CHECK (b3.loadXml (*xml2), "load a board that contains an FF-1");
+        bool si = false;
+        for (auto& m : b3.modules) if (m.type == ModuleType::Ff1)
+            for (auto* prm : b3.processorFor (m.id)->getParameters()) if (prm->getName (32).startsWith ("Silicon")) si = prm->getValue() > 0.5f;
+        CHECK (si, "the FF-1's silicon switch survives a save/load");
+    }
+
     // save / load round trip keeps modules, cables and settings
     board.buildDefaultBoard();
     auto* out = dynamic_cast<OutputTerminal*> (board.processorFor (BoardModel::kOutputId)); out->volume = 0.5f;

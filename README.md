@@ -1,6 +1,6 @@
 # Sh0ty VST plugins
 
-Four guitar-pedal / preamp plugins (VST3, AU on macOS, and Standalone), built with JUCE:
+Five guitar-pedal / preamp plugins (VST3, AU on macOS, and Standalone), built with JUCE:
 
 | Plugin | Inspired by | Interface |
 |---|---|---|
@@ -8,13 +8,14 @@ Four guitar-pedal / preamp plugins (VST3, AU on macOS, and Standalone), built wi
 | **Sh0ty FZ-3 Fuzz** | Boss FZ-3 | Art deco |
 | **Sh0ty BD-2 Blues Driver** | Boss BD-2 | Art nouveau |
 | **Sh0ty GS-424 Gain Stage** | Tascam Portastudio 424 MKIII input stage + Baxandall EQ | Minimal street art |
+| **Sh0ty FF-1 Fuzz** | Classic two-transistor PNP germanium fuzz (with a germanium / silicon switch) | Psychedelic Sasquatch marker drawing |
 
 These are "inspired by" models, not component-level circuit simulations. Interfaces are original artwork.
 
 ## Sh0ty Pedalboard (standalone app)
 ![Pedalboard](docs/pedalboard.png)
 
-A standalone app that hosts all four plugins at once, with the KTG-1 as a rack unit on top and the pedals on a board
+A standalone app that hosts all five plugins at once, with the KTG-1 as a rack unit on top and the pedals on a board
 below. **Drag** a unit by its header to move it (rack units slide up and down). **Drag from a jack** to another jack to
 patch a virtual cable (a stereo pair; a cable that would make a loop is refused). **Double-click** a cable, or right-click
 and choose Delete, to remove it. Cables run under the pedals and over the rack units, with the plug heads and the stub at
@@ -44,6 +45,22 @@ The FZ-3 DSP follows the signal path of the "Boss FZ3" schematic (JFET buffers, 
 Q3 fuzz stage, Q4, tone network, volume). The Fuzz pot's gain law is an estimate because the
 schematic draws it as a placeholder; the sheet's clean "2 CH MIXER" branch is not modelled (use Mix).
 
+## FF-1 Fuzz
+![FF-1 editor](docs/ff1-ui.png)
+
+A two-transistor PNP fuzz solved as a **real circuit**, from the "Fuzz Face PNP Ge" schematic: Q1 (emitter at ground,
+33k collector load) drives Q2's base directly, Q2's emitter runs through the 1k FUZZ pot (20u on the wiper) to ground,
+and a 100k resistor feeds Q2's emitter back to Q1's base. The 470R supply resistor and the 0.01u output cap feed the
+500k VOLUME pot. Each sample solves the two Ebers-Moll transistors, the resistors and the capacitors together
+(Newton-Raphson with trapezoidal capacitors; the two linear nodes are eliminated analytically). **Germanium vs
+silicon** is a real switch between two transistor parameter sets (saturation current, leakage, gain; the silicon set
+also uses a bias trimmer value); germanium biases to the textbook -0.65 V / -4.9 V at Q1 / Q2's collectors. Controls:
+**Volume**, **Fuzz**, **Ge / Si**, footswitch and a small input **Trim** (it is a level-sensitive circuit, so trim
+matters). Simplifications: ideal battery (no sag), the guitar is a plain 6k8 source resistor (no pickup inductance),
+a gentle roll-off stands in for transistor bandwidth, no temperature drift. It runs at 2x oversampling because the
+solve is the expensive part. The artwork is a marker drawing (`Assets/sasquatch.jpg`) with the controls built into
+his face: the knobs are his eyes, the switch is in his mouth, and the status light is his third eye.
+
 ## BD-2 Blues Driver
 ![BD-2 editor](docs/bd2-ui.png)
 
@@ -65,7 +82,7 @@ difference amplifier's R211/R212 (8.2k stock) variable up to 82k; that is a peda
 not modelled. The LED bar meter and the two stencilled reels follow the output level. Minimal street-art interface (concrete wall, one spray-painted circle, stencil lettering), original artwork.
 
 ## Pedal consistency
-The three pedals (FZ-3, BD-2, GS-424) share one spec so they sit together neatly on the pedalboard: 320 x 548 canvas,
+The four pedals (FZ-3, BD-2, GS-424, FF-1) share one spec so they sit together neatly on the pedalboard: 320 x 548 canvas,
 80 px main knobs, 50 px small knobs (Mix / Trim), a 64 px stomp button and a 22 px status light, each in its own style.
 
 ## Build

@@ -17,6 +17,10 @@ FetchContent_Declare(JUCE
     GIT_SHALLOW ON)
 FetchContent_MakeAvailable(JUCE)
 
+# Artwork compiled into the binaries (the FF-1's marker drawing).
+juce_add_binary_data(Sh0tyAssets SOURCES Assets/sasquatch.jpg)
+set_target_properties(Sh0tyAssets PROPERTIES POSITION_INDEPENDENT_CODE ON)
+
 # Format list: VST3 + Standalone everywhere, AU on macOS.
 set(PLUGIN_FORMATS VST3 Standalone)
 if(APPLE)
@@ -97,6 +101,21 @@ target_compile_definitions(Sh0tyGS424 PUBLIC JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0 
 target_link_libraries(Sh0tyGS424 PRIVATE juce::juce_audio_utils juce::juce_dsp
     PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_warning_flags)
 
+juce_add_plugin(Sh0tyFF1
+    COMPANY_NAME "Sh0ty"
+    PLUGIN_MANUFACTURER_CODE Sh0t
+    PLUGIN_CODE Ff1x
+    FORMATS ${PLUGIN_FORMATS}
+    PRODUCT_NAME "Sh0ty FF-1 Fuzz"
+    IS_SYNTH FALSE
+    NEEDS_MIDI_INPUT FALSE
+    NEEDS_MIDI_OUTPUT FALSE
+    COPY_PLUGIN_AFTER_BUILD FALSE)
+target_sources(Sh0tyFF1 PRIVATE Source/FfProcessor.cpp Source/FfProcessor.h Source/FfEditor.cpp Source/FfEditor.h)
+target_compile_definitions(Sh0tyFF1 PUBLIC JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0 JUCE_VST3_CAN_REPLACE_VST2=0)
+target_link_libraries(Sh0tyFF1 PRIVATE Sh0tyAssets juce::juce_audio_utils juce::juce_dsp
+    PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_warning_flags)
+
 # JUCE-free DSP test (harmonics, DC, gain, stability)
 option(KTG1_BUILD_TESTS "Build DSP tests" ON)
 if(KTG1_BUILD_TESTS)
@@ -113,6 +132,9 @@ if(KTG1_BUILD_TESTS)
     add_executable(gs424_dsp_test tests/gs424_test.cpp)
     target_include_directories(gs424_dsp_test PRIVATE Source)
     add_test(NAME gs424 COMMAND gs424_dsp_test)
+    add_executable(ff1_dsp_test tests/ff1_test.cpp)
+    target_include_directories(ff1_dsp_test PRIVATE Source)
+    add_test(NAME ff1 COMMAND ff1_dsp_test)
 endif()
 
 # Renders the FZ-3 / BD-2 editors to a PNG (used to review the UI headlessly under xvfb).
@@ -143,7 +165,8 @@ set(BOARD_PLUGIN_SOURCES
     Source/PluginProcessor.cpp Source/KtgEditor.cpp
     Source/FuzzProcessor.cpp   Source/FuzzEditor.cpp
     Source/BluesProcessor.cpp  Source/BluesEditor.cpp
-    Source/GsProcessor.cpp     Source/GsEditor.cpp)
+    Source/GsProcessor.cpp     Source/GsEditor.cpp
+    Source/FfProcessor.cpp     Source/FfEditor.cpp)
 
 option(KTG1_BUILD_PEDALBOARD "Build the pedalboard app" ON)
 if(KTG1_BUILD_PEDALBOARD)
@@ -158,7 +181,7 @@ if(KTG1_BUILD_PEDALBOARD)
     target_compile_definitions(Sh0tyPedalboard PRIVATE
         JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0 JUCE_APPLICATION_NAME_STRING="Sh0ty Pedalboard"
         JUCE_APPLICATION_VERSION_STRING="0.1.0" SH0TY_STANDALONE_BOARD=1)
-    target_link_libraries(Sh0tyPedalboard PRIVATE juce::juce_audio_utils juce::juce_dsp
+    target_link_libraries(Sh0tyPedalboard PRIVATE Sh0tyAssets juce::juce_audio_utils juce::juce_dsp
         PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_warning_flags)
 
     # headless test of the audio graph (patching, loops, save/load)
@@ -166,7 +189,7 @@ if(KTG1_BUILD_PEDALBOARD)
     target_sources(PedalboardTest PRIVATE tests/board_test.cpp Pedalboard/BoardModel.cpp ${BOARD_PLUGIN_SOURCES})
     target_include_directories(PedalboardTest PRIVATE Source Pedalboard)
     target_compile_definitions(PedalboardTest PRIVATE JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0 SH0TY_STANDALONE_BOARD=1)
-    target_link_libraries(PedalboardTest PRIVATE juce::juce_audio_utils juce::juce_dsp juce::juce_recommended_config_flags)
+    target_link_libraries(PedalboardTest PRIVATE Sh0tyAssets juce::juce_audio_utils juce::juce_dsp juce::juce_recommended_config_flags)
     if(KTG1_BUILD_TESTS)
         add_test(NAME pedalboard COMMAND PedalboardTest)
     endif()
@@ -175,6 +198,10 @@ if(KTG1_BUILD_PEDALBOARD)
         target_sources(PedalboardSnapshot PRIVATE tests/snapshot_board.cpp Pedalboard/BoardComponent.cpp Pedalboard/BoardModel.cpp ${BOARD_PLUGIN_SOURCES})
         target_include_directories(PedalboardSnapshot PRIVATE Source Pedalboard)
         target_compile_definitions(PedalboardSnapshot PRIVATE JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0 JUCE_STANDALONE_APPLICATION=1 SH0TY_STANDALONE_BOARD=1)
-        target_link_libraries(PedalboardSnapshot PRIVATE juce::juce_audio_utils juce::juce_dsp juce::juce_recommended_config_flags)
+        target_link_libraries(PedalboardSnapshot PRIVATE Sh0tyAssets juce::juce_audio_utils juce::juce_dsp juce::juce_recommended_config_flags)
     endif()
+    juce_add_console_app(FF1Snapshot PRODUCT_NAME "FF1Snapshot")
+    target_sources(FF1Snapshot PRIVATE tests/snapshot_ff.cpp Source/FfProcessor.cpp Source/FfEditor.cpp)
+    target_compile_definitions(FF1Snapshot PRIVATE JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0 JUCE_STANDALONE_APPLICATION=1)
+    target_link_libraries(FF1Snapshot PRIVATE Sh0tyAssets juce::juce_audio_utils juce::juce_dsp juce::juce_recommended_config_flags)
 endif()

@@ -4,7 +4,7 @@
 #include <functional>
 #include "Terminals.h"
 
-enum class ModuleType { GuitarIn, Output, Ktg1, Fz3, Bd2, Gs424 };
+enum class ModuleType { GuitarIn, Output, Ktg1, Fz3, Bd2, Gs424, Ff1 };
 
 inline bool isRackModule (ModuleType t)     { return t == ModuleType::Ktg1; }
 inline bool isTerminalModule (ModuleType t) { return t == ModuleType::GuitarIn || t == ModuleType::Output; }

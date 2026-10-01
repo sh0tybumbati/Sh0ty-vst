@@ -651,10 +651,11 @@ void BoardComponent::showAddMenu()
     m.addItem (2, "FZ-3  \xE2\x80\x94  fuzz");
     m.addItem (3, "BD-2  \xE2\x80\x94  blues driver");
     m.addItem (4, "GS-424  \xE2\x80\x94  gain stage");
+    m.addItem (5, "FF-1  \xE2\x80\x94  germanium / silicon fuzz");
     m.showMenuAsync (juce::PopupMenu::Options().withTargetComponent (&addButton), [this] (int r)
     {
         switch (r) { case 1: addModuleOfType (ModuleType::Ktg1); break; case 2: addModuleOfType (ModuleType::Fz3); break;
-                     case 3: addModuleOfType (ModuleType::Bd2);  break; case 4: addModuleOfType (ModuleType::Gs424); break; default: break; }
+                     case 3: addModuleOfType (ModuleType::Bd2);  break; case 4: addModuleOfType (ModuleType::Gs424); break; case 5: addModuleOfType (ModuleType::Ff1); break; default: break; }
     });
 }
 
