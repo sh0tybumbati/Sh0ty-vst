@@ -34,7 +34,7 @@ void StreetLookAndFeel::drawRotarySlider (juce::Graphics& g, int x, int y, int w
     if (pos > 0.002f) { g.setColour (ink); g.strokePath (value, juce::PathStrokeType (small ? 3.f : 4.f, juce::PathStrokeType::curved, juce::PathStrokeType::butt)); }
 
     // flat black knob, thin light ring, pink pointer
-    const float kr = r * 0.72f;
+    const float kr = r * 0.74f;
     g.setColour (juce::Colours::black.withAlpha (0.25f)); g.fillEllipse (c.x - kr + 1.5f, c.y - kr + 3.f, kr * 2, kr * 2);
     g.setColour (ink); g.fillEllipse (c.x - kr, c.y - kr, kr * 2, kr * 2);
     g.setColour (wall.withAlpha (0.5f)); g.drawEllipse (c.x - kr * 0.8f, c.y - kr * 0.8f, kr * 1.6f, kr * 1.6f, 1.f);
@@ -217,8 +217,8 @@ void Sh0tyGS424Editor::paint (juce::Graphics& g)
     const bool lit = footswitch.getToggleState();
     const juce::Point<float> led ((float) getWidth() - 42.f, 58.f);
     g.setColour (lit ? wall.brighter (0.4f) : juce::Colours::transparentBlack);
-    g.fillEllipse (led.x - 9.f, led.y - 9.f, 18.f, 18.f);
-    g.setColour (ink); g.drawEllipse (led.x - 9.f, led.y - 9.f, 18.f, 18.f, 3.f);
+    g.fillEllipse (led.x - 11.f, led.y - 11.f, 22.f, 22.f);
+    g.setColour (ink); g.drawEllipse (led.x - 11.f, led.y - 11.f, 22.f, 22.f, 3.f);
 
     // thin LED-bar meter: ink bars, the top few in pink
     {

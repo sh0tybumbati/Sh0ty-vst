@@ -99,7 +99,7 @@ void NouveauLookAndFeel::drawRotarySlider (juce::Graphics& g, int x, int y, int 
         g.fillPath (leaf (base, a, r * (small ? 0.22f : 0.26f), r * 0.07f));
     }
 
-    const float kr = r * 0.8f;
+    const float kr = r * 0.74f;
     g.setColour (juce::Colours::black.withAlpha (0.4f));
     g.fillEllipse (c.x - kr + 1.5f, c.y - kr + 3.f, kr * 2, kr * 2);
     juce::ColourGradient bz (bronzeHi, c.x - kr, c.y - kr, bronzeLo, c.x + kr, c.y + kr, false);
@@ -139,7 +139,7 @@ void NouveauLookAndFeel::drawRotarySlider (juce::Graphics& g, int x, int y, int 
 void NouveauLookAndFeel::drawButtonBackground (juce::Graphics& g, juce::Button& b, const juce::Colour&, bool over, bool)
 {
     using namespace nouveau;
-    const auto r = b.getLocalBounds().toFloat().reduced (2.f);
+    const auto r = b.getLocalBounds().toFloat().reduced (3.f);
     const float d = juce::jmin (r.getWidth(), r.getHeight());
     const auto rc = r.withSizeKeepingCentre (d, d);
     const bool on = b.getToggleState();
@@ -172,7 +172,7 @@ Sh0tyBD2Editor::Sh0tyBD2Editor (Sh0tyBD2Processor& p) : AudioProcessorEditor (&p
     footswitch.onStateChange = [this] { repaint(); };
     addAndMakeVisible (footswitch);
     footAttach = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment> (proc.apvts, "on", footswitch);
-    setSize (300, 540);
+    setSize (320, 548);
 }
 
 Sh0tyBD2Editor::~Sh0tyBD2Editor() { setLookAndFeel (nullptr); }
@@ -198,18 +198,18 @@ void Sh0tyBD2Editor::addKnob (Knob& k, const juce::String& id, const juce::Strin
 
 void Sh0tyBD2Editor::resized()
 {
-    const int big = 84, sm = 48;
+    const int big = 80, sm = 50;
     auto place = [] (Knob& k, juce::Rectangle<int> r, int labelH)
     {
         k.slider.setBounds (r);
         k.label.setBounds (r.getX() - 6, r.getBottom() - 2, r.getWidth() + 12, labelH);
     };
-    place (level, { 42,  92, big, big }, 18);
-    place (gain,  { 300 - 42 - big, 92, big, big }, 18);
-    place (tone,  { 150 - 38, 178, 76, 76 }, 18);
-    place (mix,   { 66, 448, sm, sm }, 16);
-    place (trim,  { 300 - 66 - sm, 448, sm, sm }, 16);
-    footswitch.setBounds (150 - 26, 456, 52, 52);
+    place (level, { 44, 96, big, big }, 18);
+    place (gain,  { 320 - 44 - big, 96, big, big }, 18);
+    place (tone,  { 160 - big / 2, 182, big, big }, 18);
+    place (mix,   { 70, 452, sm, sm }, 16);
+    place (trim,  { 320 - 70 - sm, 452, sm, sm }, 16);
+    footswitch.setBounds (160 - 32, 450, 64, 64);
 }
 
 void Sh0tyBD2Editor::paint (juce::Graphics& g)
@@ -235,7 +235,7 @@ void Sh0tyBD2Editor::paint (juce::Graphics& g)
 
     // arched window with halo
     juce::Path arch;
-    const float ax = 26.f, aw = W - 52.f, ay = 26.f, ar = aw * 0.5f, ab = 300.f;
+    const float ax = 26.f, aw = W - 52.f, ay = 26.f, ar = aw * 0.5f, ab = 306.f;
     arch.startNewSubPath (ax, ay + ar);
     arch.addArc (ax, ay, aw, aw, -juce::MathConstants<float>::halfPi, juce::MathConstants<float>::halfPi, false);
     arch.lineTo (ax + aw, ab);
@@ -272,19 +272,19 @@ void Sh0tyBD2Editor::paint (juce::Graphics& g)
     {
         const juce::Point<float> c (W * 0.5f, 60.f);
         g.setColour (bronze);
-        g.fillEllipse (c.x - 13.f, c.y - 13.f, 26.f, 26.f);
+        g.fillEllipse (c.x - 11.f, c.y - 11.f, 22.f, 22.f);
         g.setColour (bronzeHi);
-        g.drawEllipse (c.x - 13.f, c.y - 13.f, 26.f, 26.f, 1.6f);
+        g.drawEllipse (c.x - 11.f, c.y - 11.f, 22.f, 22.f, 1.6f);
         const bool lit = footswitch.getToggleState();
         if (lit)   // glow halo
         {
             g.setGradientFill (juce::ColourGradient (juce::Colour (0xffff6a55).withAlpha (0.5f), c.x, c.y,
-                                                     juce::Colour (0xffff6a55).withAlpha (0.f), c.x + 28.f, c.y, true));
-            g.fillEllipse (c.x - 28.f, c.y - 28.f, 56.f, 56.f);
+                                                     juce::Colour (0xffff6a55).withAlpha (0.f), c.x + 26.f, c.y, true));
+            g.fillEllipse (c.x - 26.f, c.y - 26.f, 52.f, 52.f);
         }
         g.setGradientFill (juce::ColourGradient (lit ? juce::Colour (0xffff7a66) : juce::Colour (0xff4a1215), c.x - 3.f, c.y - 3.f,
                                                  lit ? juce::Colour (0xff8e0d12) : juce::Colour (0xff1c0608), c.x + 7.f, c.y + 7.f, true));
-        g.fillEllipse (c.x - 8.5f, c.y - 8.5f, 17.f, 17.f);
+        g.fillEllipse (c.x - 7.5f, c.y - 7.5f, 15.f, 15.f);
         g.setColour (juce::Colours::white.withAlpha (lit ? 0.55f : 0.12f));
         g.fillEllipse (c.x - 4.f, c.y - 5.f, 5.f, 3.5f);
         g.setColour (bronzeHi);
@@ -295,35 +295,35 @@ void Sh0tyBD2Editor::paint (juce::Graphics& g)
     // jack labels
     g.setColour (ink);
     g.setFont (serif (12.f, false));
-    g.drawText (juce::String::fromUTF8 ("\xE2\x9D\xA7 OUTPUT"), 28, 322, 110, 16, juce::Justification::left);
-    g.drawText (juce::String::fromUTF8 ("INPUT \xE2\x9D\xA7"), (int) W - 138, 322, 110, 16, juce::Justification::right);
+    g.drawText (juce::String::fromUTF8 ("\xE2\x9D\xA7 OUTPUT"), 28, 330, 110, 16, juce::Justification::left);
+    g.drawText (juce::String::fromUTF8 ("INPUT \xE2\x9D\xA7"), (int) W - 138, 330, 110, 16, juce::Justification::right);
 
     // title lockup with whiplash flourishes
     g.setColour (tealLo);
     g.setFont (serif (46.f));
-    g.drawText ("Blues", 0, 334, (int) W, 50, juce::Justification::centred);
+    g.drawText ("Blues", 0, 342, (int) W, 50, juce::Justification::centred);
     g.setColour (teal);
     g.setFont (serif (40.f));
-    g.drawText ("Driver", 0, 372, (int) W, 44, juce::Justification::centred);
+    g.drawText ("Driver", 0, 380, (int) W, 44, juce::Justification::centred);
     g.setColour (bronze);
     {
         juce::Path fl;
-        fl.startNewSubPath (34.f, 388.f);
-        fl.cubicTo (60.f, 368.f, 70.f, 408.f, 96.f, 390.f);
-        fl.startNewSubPath (W - 34.f, 388.f);
-        fl.cubicTo (W - 60.f, 368.f, W - 70.f, 408.f, W - 96.f, 390.f);
+        fl.startNewSubPath (34.f, 396.f);
+        fl.cubicTo (60.f, 376.f, 70.f, 416.f, 96.f, 398.f);
+        fl.startNewSubPath (W - 34.f, 396.f);
+        fl.cubicTo (W - 60.f, 376.f, W - 70.f, 416.f, W - 96.f, 398.f);
         g.strokePath (fl, juce::PathStrokeType (1.6f));
     }
     g.setColour (bronzeLo);
     g.setFont (serif (12.f, false));
-    g.drawText (juce::String::fromUTF8 ("BD-2 style  \xC2\xB7  SH0TY"), 0, 418, (int) W, 14, juce::Justification::centred);
+    g.drawText (juce::String::fromUTF8 ("BD-2 style  \xC2\xB7  SH0TY"), 0, 426, (int) W, 14, juce::Justification::centred);
 
     // lower pad: teal band with a sinuous top edge and leaf motif
     {
         juce::Path pad;
-        pad.startNewSubPath (26.f, 452.f);
-        pad.cubicTo (80.f, 436.f, 120.f, 468.f, W * 0.5f, 452.f);
-        pad.cubicTo (W - 120.f, 436.f, W - 80.f, 468.f, W - 26.f, 452.f);
+        pad.startNewSubPath (26.f, 458.f);
+        pad.cubicTo (80.f, 442.f, 120.f, 474.f, W * 0.5f, 458.f);
+        pad.cubicTo (W - 120.f, 442.f, W - 80.f, 474.f, W - 26.f, 458.f);
         pad.lineTo (W - 26.f, H - 26.f);
         pad.lineTo (26.f, H - 26.f);
         pad.closeSubPath();

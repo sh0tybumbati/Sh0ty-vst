@@ -161,11 +161,11 @@ void BoardModel::buildDefaultBoard()
     clearBoard();
     auto saved = std::move (onStructureChanged); onStructureChanged = nullptr;
     find (kInputId)->pos  = { 8, 40 };
-    find (kOutputId)->pos = { 934, 40 };
+    find (kOutputId)->pos = { 958, 40 };
     const int rack = addModule (ModuleType::Ktg1);
     const int gs   = addModule (ModuleType::Gs424, { 190, 0 });
     const int bd   = addModule (ModuleType::Bd2,   { 446, 0 });
-    const int fz   = addModule (ModuleType::Fz3,   { 690, 0 });
+    const int fz   = addModule (ModuleType::Fz3,   { 702, 0 });
     connect (kInputId, gs); connect (gs, bd); connect (bd, fz); connect (fz, rack); connect (rack, kOutputId);
     onStructureChanged = std::move (saved);
     changed();

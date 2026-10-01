@@ -169,7 +169,7 @@ void ModuleComponent::mouseDown (const juce::MouseEvent& e)
 {
     bool out = false;
     if (overJack (e.getPosition(), out)) { drag = Drag::Cable; cableFromOutput = out; board.beginCable (*this, out); return; }
-    if (e.y < headerH && e.x >= margin && e.x < getWidth() - margin) { drag = Drag::Move; dragOffset = e.getPosition(); toFront (true); }
+    if (e.y < headerH && e.x >= margin && e.x < getWidth() - margin) { drag = Drag::Move; dragOffset = e.getPosition(); board.bringToFront (*this); }
 }
 
 void ModuleComponent::mouseDrag (const juce::MouseEvent& e)
@@ -203,9 +203,9 @@ void ModuleComponent::mouseMove (const juce::MouseEvent& e)
 class CableLayer : public juce::Component
 {
 public:
-    explicit CableLayer (BoardComponent& b) : board (b) { setInterceptsMouseClicks (true, false); }
-    void paint (juce::Graphics& g) override { board.paintCables (g); }
-    bool hitTest (int x, int y) override { return board.cableAt ({ x, y }) >= 0; }
+    CableLayer (BoardComponent& b, bool plugsOnly) : board (b), plugs (plugsOnly) { setInterceptsMouseClicks (! plugsOnly, false); }
+    void paint (juce::Graphics& g) override { if (plugs) board.paintPlugs (g); else board.paintCables (g); }
+    bool hitTest (int x, int y) override { return ! plugs && board.cableAt ({ x, y }) >= 0; }
     void mouseDown (const juce::MouseEvent& e) override
     {
         if (! e.mods.isPopupMenu()) return;
@@ -217,6 +217,7 @@ public:
     void mouseDoubleClick (const juce::MouseEvent& e) override { const int i = board.cableAt (e.getPosition()); if (i >= 0) board.deleteCable (i); }
 private:
     BoardComponent& board;
+    bool plugs;
 };
 
 //==============================================================================
@@ -224,8 +225,10 @@ private:
 //==============================================================================
 BoardComponent::BoardComponent (BoardModel& m, juce::AudioDeviceManager& dm) : model (m), deviceManager (dm)
 {
-    cableLayer = std::make_unique<CableLayer> (*this);
+    cableLayer = std::make_unique<CableLayer> (*this, false);
+    plugLayer  = std::make_unique<CableLayer> (*this, true);
     addAndMakeVisible (*cableLayer);
+    addAndMakeVisible (*plugLayer);
     for (auto* b : { &addButton, &audioButton, &saveButton, &loadButton, &resetButton })
     {
         b->setColour (juce::TextButton::buttonColourId, juce::Colour (0xff2a2c33));
@@ -270,9 +273,29 @@ void BoardComponent::syncModules()
             addAndMakeVisible (c);
         }
     layoutAll();
-    cableLayer->toFront (false);
+    updateZOrder();
     repaint();
 }
+
+void BoardComponent::updateZOrder()
+{
+    // rack units at the bottom, then the cable bodies, then the pedals / terminals, then the plug heads on top
+    std::vector<juce::Component*> racks, others;
+    for (int i = 0; i < getNumChildComponents(); ++i)
+        if (auto* m = dynamic_cast<ModuleComponent*> (getChildComponent (i))) (isRackModule (m->getType()) ? racks : others).push_back (m);
+    for (auto* c : racks)  c->toFront (false);
+    cableLayer->toFront (false);
+    for (auto* c : others) c->toFront (false);       // keeps their current relative order, so a dragged pedal stays on top
+    plugLayer->toFront (false);
+}
+
+void BoardComponent::bringToFront (ModuleComponent& m)
+{
+    m.toFront (false);
+    updateZOrder();
+}
+
+void BoardComponent::repaintCables() { cableLayer->repaint(); plugLayer->repaint(); }
 
 void BoardComponent::layoutAll()
 {
@@ -292,6 +315,7 @@ void BoardComponent::layoutAll()
                 c->setTopLeftPosition (x, yy);
             }
     cableLayer->setBounds (getLocalBounds());
+    plugLayer->setBounds (getLocalBounds());
     renderBackground();
 }
 
@@ -390,25 +414,73 @@ juce::Path BoardComponent::cablePath (juce::Point<int> a, juce::Point<int> b) co
     return p;
 }
 
+namespace
+{
+void strokeCable (juce::Graphics& g, const juce::Path& p, juce::Colour c)
+{
+    g.setColour (juce::Colours::black.withAlpha (0.55f)); g.strokePath (p, juce::PathStrokeType (7.f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded), juce::AffineTransform::translation (0.f, 3.f));
+    g.setColour (juce::Colour (0xff0b0b0d)); g.strokePath (p, juce::PathStrokeType (6.f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
+    g.setColour (c); g.strokePath (p, juce::PathStrokeType (3.6f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
+    g.setColour (juce::Colours::white.withAlpha (0.35f)); g.strokePath (p, juce::PathStrokeType (1.1f), juce::AffineTransform::translation (0.f, -1.f));
+}
+
+// the part of a path between two arc lengths, as a polyline
+juce::Path subPath (const juce::Path& p, float from, float to)
+{
+    juce::Path out;
+    float at = 0.f; bool started = false;
+    juce::PathFlatteningIterator it (p, juce::AffineTransform(), 0.5f);
+    while (it.next())
+    {
+        const float len = juce::Line<float> (it.x1, it.y1, it.x2, it.y2).getLength();
+        if (len <= 0.f) continue;
+        const float s0 = at, s1 = at + len; at = s1;
+        if (s1 < from || s0 > to) continue;
+        const float t0 = juce::jmax (0.f, (from - s0) / len), t1 = juce::jmin (1.f, (to - s0) / len);
+        const juce::Point<float> a (it.x1 + (it.x2 - it.x1) * t0, it.y1 + (it.y2 - it.y1) * t0), b (it.x1 + (it.x2 - it.x1) * t1, it.y1 + (it.y2 - it.y1) * t1);
+        if (! started) { out.startNewSubPath (a); started = true; }
+        out.lineTo (b);
+    }
+    return out;
+}
+float pathLength (const juce::Path& p)
+{
+    float l = 0.f; juce::PathFlatteningIterator it (p, juce::AffineTransform(), 0.5f);
+    while (it.next()) l += juce::Line<float> (it.x1, it.y1, it.x2, it.y2).getLength();
+    return l;
+}
+} // namespace
+
+// Cable bodies: this layer sits above the rack units and below the pedals, so cables tuck neatly under the pedals.
 void BoardComponent::paintCables (juce::Graphics& g)
 {
-    auto draw = [&g] (const juce::Path& p, juce::Colour c)
-    {
-        g.setColour (juce::Colours::black.withAlpha (0.55f)); g.strokePath (p, juce::PathStrokeType (7.f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded), juce::AffineTransform::translation (0.f, 3.f));
-        g.setColour (juce::Colour (0xff0b0b0d)); g.strokePath (p, juce::PathStrokeType (6.f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
-        g.setColour (c); g.strokePath (p, juce::PathStrokeType (3.6f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
-        g.setColour (juce::Colours::white.withAlpha (0.35f)); g.strokePath (p, juce::PathStrokeType (1.1f), juce::AffineTransform::translation (0.f, -1.f));
-    };
+    for (auto& c : model.cables)
+        strokeCable (g, cablePath (jackPosition (c.src, true), jackPosition (c.dst, false)), cableColour (c.src));
+}
+
+// The top layer: a short stub where each cable leaves its jack, the plug head on the jack itself, the cable being dragged.
+void BoardComponent::paintPlugs (juce::Graphics& g)
+{
     for (auto& c : model.cables)
     {
         const auto a = jackPosition (c.src, true), b = jackPosition (c.dst, false);
-        draw (cablePath (a, b), cableColour (c.src));
-        for (auto pt : { a, b }) { g.setColour (juce::Colour (0xff0b0b0d)); g.fillEllipse (pt.toFloat().x - 6.f, pt.toFloat().y - 6.f, 12.f, 12.f); g.setColour (cableColour (c.src)); g.fillEllipse (pt.toFloat().x - 3.5f, pt.toFloat().y - 3.5f, 7.f, 7.f); }
+        const auto path = cablePath (a, b);
+        const float len = pathLength (path), stub = juce::jmin (34.f, len * 0.4f);
+        const auto col = cableColour (c.src);
+        strokeCable (g, subPath (path, 0.f, stub), col);
+        strokeCable (g, subPath (path, len - stub, len), col);
+        for (auto pt : { a, b })
+        {
+            const auto f = pt.toFloat();
+            g.setColour (juce::Colour (0xff0b0b0d)); g.fillEllipse (f.x - 7.f, f.y - 7.f, 14.f, 14.f);
+            g.setColour (col); g.fillEllipse (f.x - 4.f, f.y - 4.f, 8.f, 8.f);
+            g.setColour (juce::Colours::white.withAlpha (0.45f)); g.fillEllipse (f.x - 2.5f, f.y - 3.f, 3.f, 2.f);
+        }
     }
     if (dragging)
     {
         const auto fixed = jackPosition (dragModule, dragFromOutput);
-        draw (dragFromOutput ? cablePath (fixed, dragPos) : cablePath (dragPos, fixed), juce::Colours::white.withAlpha (0.85f));
+        strokeCable (g, dragFromOutput ? cablePath (fixed, dragPos) : cablePath (dragPos, fixed), juce::Colours::white.withAlpha (0.9f));
     }
     if (hoverModule >= 0)       // ring around the jack the cable would land on
     {
@@ -441,7 +513,7 @@ void BoardComponent::beginCable (ModuleComponent& m, bool fromOutput)
 {
     dragging = true; dragFromOutput = fromOutput; dragModule = m.getModuleId();
     dragPos = m.getJackPosition (fromOutput); hoverModule = -1;
-    cableLayer->repaint();
+    repaintCables();
 }
 
 void BoardComponent::dragCable (juce::Point<int> p)
@@ -457,7 +529,7 @@ void BoardComponent::dragCable (juce::Point<int> p)
             hoverValid = dragFromOutput ? model.canConnect (dragModule, hoverModule) : model.canConnect (hoverModule, dragModule);
         }
     }
-    cableLayer->repaint();
+    repaintCables();
 }
 
 void BoardComponent::endCable (juce::Point<int> p)
@@ -466,7 +538,7 @@ void BoardComponent::endCable (juce::Point<int> p)
     const int target = hoverModule; const bool valid = hoverValid, fromOut = dragFromOutput; const int src = dragModule;
     dragging = false; hoverModule = -1;
     if (target >= 0 && valid) { if (fromOut) model.connect (src, target); else model.connect (target, src); }
-    cableLayer->repaint();
+    repaintCables();
 }
 
 bool BoardComponent::simulateCableDrag (int srcId, int dstId)
@@ -499,8 +571,8 @@ void BoardComponent::moduleMoved (ModuleComponent& m)
         }
         else info->pos = { m.getX(), m.getY() - boardTopY };
     }
-    cableLayer->toFront (false);
-    cableLayer->repaint();
+    updateZOrder();
+    repaintCables();
 }
 
 void BoardComponent::requestRemove (int id)
@@ -511,7 +583,7 @@ void BoardComponent::requestRemove (int id)
         if (safe == nullptr) return;
         if (auto* c = componentFor (id)) modules.removeObject (c, true);
         model.removeModule (id);
-        layoutAll(); cableLayer->repaint(); repaint();
+        layoutAll(); repaintCables(); repaint();
     });
 }
 

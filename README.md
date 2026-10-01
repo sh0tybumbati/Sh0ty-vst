@@ -17,7 +17,7 @@ These are "inspired by" models, not component-level circuit simulations. Interfa
 A standalone app that hosts all four plugins at once, with the KTG-1 as a rack unit on top and the pedals on a board
 below. **Drag** a unit by its header to move it (rack units slide up and down), **drag from a jack** to another jack to
 patch a virtual cable (stereo pair; a cable that would make a loop is refused), **double-click** a cable (or right-click
-and choose Delete) to remove it, and use **+ ADD** to add more units (several of each are fine). **Guitar In** has a gain
+and choose Delete) to remove it, (cable bodies run under the pedals and over the rack units; plugs and the first few pixels of each cable stay on top so they still read as plugged in), and use **+ ADD** to add more units (several of each are fine). **Guitar In** has a gain
 knob and a MONO switch (copies input 1 to both channels, which is what a guitar on a single input needs); **Output** has a
 master volume and a level meter. Save and Load write `.sh0tyboard` files, and the app reopens your last board and audio
 device. It is built as part of the normal build (`-DKTG1_BUILD_PEDALBOARD=OFF` to skip it); on macOS it is a universal
@@ -100,3 +100,7 @@ not modelled. The LED bar meter and the two stencilled reels follow the output l
 The FZ-3 DSP follows the signal path of the "Boss FZ3" schematic (JFET buffers, Q1 treble shelf,
 Q3 fuzz stage, Q4, tone network, volume). The Fuzz pot's gain law is an estimate because the
 schematic draws it as a placeholder; the sheet's clean "2 CH MIXER" branch is not modelled (use Mix).
+
+## Pedal consistency
+The three pedals (FZ-3, BD-2, GS-424) share one spec so they sit together neatly on the pedalboard: 320 x 548 canvas,
+80 px main knobs, 50 px small knobs (Mix / Trim), a 64 px stomp button and a 22 px status light, each in its own style.

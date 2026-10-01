@@ -73,7 +73,7 @@ void DecoLookAndFeel::drawRotarySlider (juce::Graphics& g, int x, int y, int w, 
                       c.getPointOnCircumference (r * (major ? 1.14f : 1.06f), a) }, major ? 2.f : 1.f);
     }
 
-    const float kr = r * 0.82f;
+    const float kr = r * 0.74f;
     g.setColour (juce::Colours::black.withAlpha (0.5f));
     g.fillEllipse (c.x - kr + 1.5f, c.y - kr + 3.f, kr * 2, kr * 2);
 
@@ -109,7 +109,7 @@ void DecoLookAndFeel::drawRotarySlider (juce::Graphics& g, int x, int y, int w, 
 void DecoLookAndFeel::drawButtonBackground (juce::Graphics& g, juce::Button& b, const juce::Colour&, bool over, bool)
 {
     using namespace deco;
-    const auto r = b.getLocalBounds().toFloat().reduced (2.f);
+    const auto r = b.getLocalBounds().toFloat().reduced (3.f);
     const float d = juce::jmin (r.getWidth(), r.getHeight());
     const auto rc = r.withSizeKeepingCentre (d, d);
     const bool on = b.getToggleState();
@@ -142,7 +142,7 @@ Sh0tyFZ3Editor::Sh0tyFZ3Editor (Sh0tyFZ3Processor& p) : AudioProcessorEditor (&p
     footswitch.onStateChange = [this] { repaint(); };
     addAndMakeVisible (footswitch);
     footAttach = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment> (proc.apvts, "on", footswitch);
-    setSize (300, 520);
+    setSize (320, 548);
 }
 
 Sh0tyFZ3Editor::~Sh0tyFZ3Editor() { setLookAndFeel (nullptr); }
@@ -168,18 +168,18 @@ void Sh0tyFZ3Editor::addKnob (Knob& k, const juce::String& id, const juce::Strin
 
 void Sh0tyFZ3Editor::resized()
 {
-    const int big = 88, sm = 54;
+    const int big = 80, sm = 50;
     auto place = [] (Knob& k, juce::Rectangle<int> r, int labelH)
     {
         k.slider.setBounds (r);
         k.label.setBounds (r.getX() - 10, r.getBottom() - 1, r.getWidth() + 20, labelH);
     };
-    place (level, { 30, 62, big, big }, 18);
-    place (fuzz,  { 300 - 30 - big, 62, big, big }, 18);
-    place (tone,  { 150 - 38, 138, 76, 76 }, 18);
-    place (mix,   { 58, 424, sm, sm }, 16);
-    place (trim,  { 300 - 58 - sm, 424, sm, sm }, 16);
-    footswitch.setBounds (150 - 28, 428, 56, 56);
+    place (level, { 30, 66, big, big }, 18);
+    place (fuzz,  { 320 - 30 - big, 66, big, big }, 18);
+    place (tone,  { 160 - big / 2, 150, big, big }, 18);
+    place (mix,   { 60, 442, sm, sm }, 16);
+    place (trim,  { 320 - 60 - sm, 442, sm, sm }, 16);
+    footswitch.setBounds (160 - 32, 436, 64, 64);
 }
 
 void Sh0tyFZ3Editor::paint (juce::Graphics& g)
@@ -196,7 +196,7 @@ void Sh0tyFZ3Editor::paint (juce::Graphics& g)
 
     // control panel: sunburst radiating from the top-centre
     {
-        const juce::Rectangle<float> pr (22.f, 22.f, W - 44.f, 214.f);
+        const juce::Rectangle<float> pr (22.f, 22.f, W - 44.f, 228.f);
         juce::Graphics::ScopedSaveState ss (g);
         g.reduceClipRegion (stepped (pr, 6.f).createPathWithRoundedCorners (0.f).getBounds().toNearestInt());
         juce::ColourGradient pg (juce::Colour (0xff1c363d), W * 0.5f, 22.f, panel, W * 0.5f, 236.f, true);
@@ -223,9 +223,9 @@ void Sh0tyFZ3Editor::paint (juce::Graphics& g)
     {
         const juce::Point<float> c (W * 0.5f, 42.f);
         g.setColour (goldLo);
-        g.fillEllipse (c.x - 12.f, c.y - 12.f, 24.f, 24.f);
+        g.fillEllipse (c.x - 11.f, c.y - 11.f, 22.f, 22.f);
         g.setColour (gold);
-        g.drawEllipse (c.x - 12.f, c.y - 12.f, 24.f, 24.f, 2.f);
+        g.drawEllipse (c.x - 11.f, c.y - 11.f, 22.f, 22.f, 2.f);
         const bool lit = footswitch.getToggleState();
         if (lit)   // glow halo
         {
@@ -236,7 +236,7 @@ void Sh0tyFZ3Editor::paint (juce::Graphics& g)
         juce::ColourGradient jw (lit ? juce::Colour (0xffff6a5a) : juce::Colour (0xff4a1215), c.x - 3.f, c.y - 3.f,
                                  lit ? juce::Colour (0xff8e0d12) : juce::Colour (0xff1c0608), c.x + 7.f, c.y + 7.f, true);
         g.setGradientFill (jw);
-        g.fillEllipse (c.x - 8.f, c.y - 8.f, 16.f, 16.f);
+        g.fillEllipse (c.x - 7.5f, c.y - 7.5f, 15.f, 15.f);
         g.setColour (juce::Colours::white.withAlpha (lit ? 0.6f : 0.12f));
         g.fillEllipse (c.x - 4.f, c.y - 5.f, 5.f, 3.5f);
         g.setColour (goldHi);
@@ -245,23 +245,23 @@ void Sh0tyFZ3Editor::paint (juce::Graphics& g)
 
     // jack labels
     g.setColour (goldHi);
-    spaced (g, juce::String::fromUTF8 ("\xE2\x97\x80  OUTPUT"), { 24, 246, 110, 16 }, 11.f, 0.2f);
-    spaced (g, juce::String::fromUTF8 ("INPUT  \xE2\x97\x80"), { (int) W - 134, 246, 110, 16 }, 11.f, 0.2f);
+    spaced (g, juce::String::fromUTF8 ("\xE2\x97\x80  OUTPUT"), { 24, 262, 110, 16 }, 11.f, 0.2f);
+    spaced (g, juce::String::fromUTF8 ("INPUT  \xE2\x97\x80"), { (int) W - 134, 262, 110, 16 }, 11.f, 0.2f);
 
     // title lockup
     g.setColour (gold);
-    g.fillRect (30.f, 286.f, W - 60.f, 1.5f);
+    g.fillRect (30.f, 300.f, W - 60.f, 1.5f);
     g.setColour (cream);
-    spaced (g, "FUZZ", { 0, 288, (int) W, 70 }, 62.f, 0.28f);
+    spaced (g, "FUZZ", { 0, 302, (int) W, 70 }, 62.f, 0.28f);
     g.setColour (gold);
-    g.fillRect (30.f, 362.f, W - 60.f, 1.5f);
-    diamond (g, { W * 0.5f, 362.7f }, 6.f);
+    g.fillRect (30.f, 376.f, W - 60.f, 1.5f);
+    diamond (g, { W * 0.5f, 376.7f }, 6.f);
     g.setColour (goldHi);
-    spaced (g, juce::String::fromUTF8 ("FZ-3  \xC2\xB7  SH0TY"), { 0, 368, (int) W, 18 }, 13.f, 0.4f);
+    spaced (g, juce::String::fromUTF8 ("FZ-3  \xC2\xB7  SH0TY"), { 0, 382, (int) W, 18 }, 13.f, 0.4f);
 
     // lower pad with a fan motif
     {
-        const juce::Rectangle<float> pad (22.f, 396.f, W - 44.f, H - 396.f - 22.f);
+        const juce::Rectangle<float> pad (22.f, 412.f, W - 44.f, H - 412.f - 22.f);
         juce::Graphics::ScopedSaveState ss (g);
         g.reduceClipRegion (pad.toNearestInt());
         g.setColour (panel);

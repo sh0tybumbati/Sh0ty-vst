@@ -78,7 +78,11 @@ public:
     bool simulateCableDrag (int srcId, int dstId);   // drag from src's output jack to dst's input jack (used by tests)
 
     // cables
-    void paintCables (juce::Graphics&);
+    void paintCables (juce::Graphics&);          // the cable bodies
+    void paintPlugs (juce::Graphics&);           // plug heads, the stub leaving each jack, the cable being dragged
+    void updateZOrder();                         // rack < cables < pedals < plugs
+    void repaintCables();
+    void bringToFront (ModuleComponent&);
     int  cableAt (juce::Point<int> p) const;
     void deleteCable (int index);
 
@@ -97,7 +101,7 @@ private:
     BoardModel& model;
     juce::AudioDeviceManager& deviceManager;
     juce::OwnedArray<ModuleComponent> modules;
-    std::unique_ptr<CableLayer> cableLayer;
+    std::unique_ptr<CableLayer> cableLayer, plugLayer;   // cable bodies (above the rack, below the pedals) and plug heads (on top)
     juce::TextButton addButton { "+ ADD" }, audioButton { "AUDIO" }, saveButton { "SAVE" }, loadButton { "LOAD" }, resetButton { "RESET" };
     std::unique_ptr<juce::FileChooser> chooser;
     juce::Image background;
