@@ -92,6 +92,25 @@ int main()
         CHECK (si, "the FF-1's silicon switch survives a save/load");
     }
 
+    // the RE-201 rack unit: echoes the signal on the board and keeps its mode through a save and load
+    {
+        BoardModel b2; b2.graph.setPlayConfigDetails (2, 2, 48000.0, 512); b2.graph.prepareToPlay (48000.0, 512);
+        dynamic_cast<InputTerminal*> (b2.processorFor (BoardModel::kInputId))->muted = false;
+        const int re = b2.addModule (ModuleType::Re201);
+        CHECK (isRackModule (ModuleType::Re201), "the RE-201 is a rack unit");
+        CHECK (b2.connect (BoardModel::kInputId, re) && b2.connect (re, BoardModel::kOutputId), "Guitar In -> RE-201 -> Output");
+        const float through = runBlocks (b2, 0.1f, 80);
+        CHECK (through > 0.05f && std::isfinite (through), "RE-201 on the board passes the dry signal and adds the echo");
+        for (auto* prm : b2.processorFor (re)->getParameters())
+            if (prm->getName (32).startsWith ("Mode")) prm->setValueNotifyingHost (10.f / 11.f);
+        auto xml2 = b2.toXml();
+        BoardModel b3; CHECK (b3.loadXml (*xml2), "load a board that contains an RE-201");
+        int mode = 0;
+        for (auto& m : b3.modules) if (m.type == ModuleType::Re201)
+            for (auto* prm : b3.processorFor (m.id)->getParameters()) if (prm->getName (32).startsWith ("Mode")) mode = (int) std::lround (prm->getValue() * 11.f + 1.f);
+        CHECK (mode == 11, "the RE-201's mode survives a save/load");
+    }
+
     // save / load round trip keeps modules, cables and settings
     board.buildDefaultBoard();
     auto* out = dynamic_cast<OutputTerminal*> (board.processorFor (BoardModel::kOutputId)); out->volume = 0.5f;

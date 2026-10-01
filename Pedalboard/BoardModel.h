@@ -4,9 +4,9 @@
 #include <functional>
 #include "Terminals.h"
 
-enum class ModuleType { GuitarIn, Output, Ktg1, Fz3, Bd2, Gs424, Ff1 };
+enum class ModuleType { GuitarIn, Output, Ktg1, Fz3, Bd2, Gs424, Ff1, Re201 };
 
-inline bool isRackModule (ModuleType t)     { return t == ModuleType::Ktg1; }
+inline bool isRackModule (ModuleType t)     { return t == ModuleType::Ktg1 || t == ModuleType::Re201; }
 inline bool isTerminalModule (ModuleType t) { return t == ModuleType::GuitarIn || t == ModuleType::Output; }
 juce::String moduleTypeName (ModuleType);
 juce::String moduleTypeKey (ModuleType);

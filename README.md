@@ -9,13 +9,14 @@ Five guitar-pedal / preamp plugins (VST3, AU on macOS, and Standalone), built wi
 | **Sh0ty BD-2 Blues Driver** | Boss BD-2 | Art nouveau |
 | **Sh0ty GS-424 Gain Stage** | Tascam Portastudio 424 MKIII input stage + Baxandall EQ | Minimal street art |
 | **Sh0ty FF-1 Fuzz** | Classic two-transistor PNP germanium fuzz (with a germanium / silicon switch) | Psychedelic Sasquatch marker drawing |
+| **Sh0ty RE-201 Space Echo** | Roland RE-201 Space Echo (tape echo + spring reverb), rack unit | Retro-futuristic wasteland vault |
 
 These are "inspired by" models, not component-level circuit simulations. Interfaces are original artwork.
 
 ## Sh0ty Pedalboard (standalone app)
 ![Pedalboard](docs/pedalboard.png)
 
-A standalone app that hosts all five plugins at once, with the KTG-1 as a rack unit on top and the pedals on a board
+A standalone app that hosts all six plugins at once, with the KTG-1 and RE-201 as rack units on top and the pedals on a board
 below. **Drag** a unit by its header to move it (rack units slide up and down). **Drag from a jack** to another jack to
 patch a virtual cable (a stereo pair; a cable that would make a loop is refused). **Double-click** a cable, or right-click
 and choose Delete, to remove it. Cables run under the pedals and over the rack units, with the plug heads and the stub at
@@ -60,6 +61,29 @@ matters). Simplifications: ideal battery (no sag), the guitar is a plain 6k8 sou
 a gentle roll-off stands in for transistor bandwidth, no temperature drift. It runs at 2x oversampling because the
 solve is the expensive part. The artwork is a marker drawing (`Assets/sasquatch.jpg`) with the controls built into
 his face: the knobs are his eyes, the switch is in his mouth, and the status light is his third eye.
+
+## RE-201 Space Echo
+![RE-201](docs/re201-ui.png)
+
+A rack-mount tape echo and spring reverb, built from the RE-201 block diagram and circuit sheets (mic amp -> recording
+pre-amp -> record head -> tape loop with three playback heads -> playback pre-amp -> echo volume; INTENSITY feeds the
+playback back to the recording pre-amp; a spring reverb is fed from the same send; BASS / TREBLE on the return; the dry
+signal goes straight to the output pad). Interface: a weathered, riveted olive-steel panel with a phosphor-green CRT read-out,
+analogue VU, radiation-trefoil PEAK lamp, chrome and Bakelite dials and a hazard-striped jack strip.
+
+- **Tape**: heads sit at 1x / 2x / 3x the head-1 delay; **REPEAT RATE** is the tape speed (head 1 from about 300 ms down to
+  60 ms), and the motor slews, so turning it bends the pitch like the real thing. Wow and flutter, a head/tape bandwidth
+  roll-off that dulls every repeat, and a soft-saturating record path so INTENSITY can run away into self-oscillation
+  without blowing up.
+- **MODE SELECTOR** (12 positions): 1-3 single heads, 4-7 head combinations, 8-11 echo + spring reverb, 12 spring only.
+  The head combinations follow common documentation of the unit rather than a measurement of one, so treat them as an
+  approximation; the table is `modeInfo()` in `Source/SpaceEchoStage.h`.
+- **Spring reverb**: two springs, each a delay with a chain of dispersive allpasses (the chirpy "boing"), damping and feedback.
+- **Controls**: MIC VOLUME 1 / 2 (how much of the left / right input is sent to the echo), INSTRUMENT VOLUME (overall
+  send, and drive into the pre-amp), BASS, TREBLE, REVERB VOLUME, REPEAT RATE, INTENSITY, ECHO VOLUME, OUTPUT LEVEL H/M/L,
+  ECHO CANCEL (the foot switch) and POWER. Dry stereo passes through untouched; the echo/reverb return is mono, as on the real unit.
+- Not modelled: the real transport's tape-wear, the bias oscillator and the motor circuit (the motor-replacement sheet was
+  used only to confirm that speed is what sets the delay).
 
 ## BD-2 Blues Driver
 ![BD-2 editor](docs/bd2-ui.png)

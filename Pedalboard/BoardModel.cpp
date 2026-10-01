@@ -4,6 +4,7 @@
 #include "BluesProcessor.h"
 #include "GsProcessor.h"
 #include "FfProcessor.h"
+#include "ReProcessor.h"
 
 using IOProc = juce::AudioProcessorGraph::AudioGraphIOProcessor;
 
@@ -11,19 +12,19 @@ juce::String moduleTypeName (ModuleType t)
 {
     switch (t) { case ModuleType::GuitarIn: return "GUITAR IN"; case ModuleType::Output: return "OUTPUT";
                  case ModuleType::Ktg1: return "KTG-1"; case ModuleType::Fz3: return "FZ-3";
-                 case ModuleType::Bd2: return "BD-2"; case ModuleType::Gs424: return "GS-424"; case ModuleType::Ff1: return "FF-1"; }
+                 case ModuleType::Bd2: return "BD-2"; case ModuleType::Gs424: return "GS-424"; case ModuleType::Ff1: return "FF-1"; case ModuleType::Re201: return "RE-201"; }
     return {};
 }
 juce::String moduleTypeKey (ModuleType t)
 {
     switch (t) { case ModuleType::GuitarIn: return "guitarin"; case ModuleType::Output: return "output";
                  case ModuleType::Ktg1: return "ktg1"; case ModuleType::Fz3: return "fz3";
-                 case ModuleType::Bd2: return "bd2"; case ModuleType::Gs424: return "gs424"; case ModuleType::Ff1: return "ff1"; }
+                 case ModuleType::Bd2: return "bd2"; case ModuleType::Gs424: return "gs424"; case ModuleType::Ff1: return "ff1"; case ModuleType::Re201: return "re201"; }
     return {};
 }
 bool moduleTypeFromKey (const juce::String& k, ModuleType& out)
 {
-    for (auto t : { ModuleType::GuitarIn, ModuleType::Output, ModuleType::Ktg1, ModuleType::Fz3, ModuleType::Bd2, ModuleType::Gs424, ModuleType::Ff1 })
+    for (auto t : { ModuleType::GuitarIn, ModuleType::Output, ModuleType::Ktg1, ModuleType::Fz3, ModuleType::Bd2, ModuleType::Gs424, ModuleType::Ff1, ModuleType::Re201 })
         if (moduleTypeKey (t) == k) { out = t; return true; }
     return false;
 }
@@ -59,6 +60,7 @@ std::unique_ptr<juce::AudioProcessor> BoardModel::makeProcessor (ModuleType t) c
         case ModuleType::Bd2:      return std::make_unique<Sh0tyBD2Processor>();
         case ModuleType::Gs424:    return std::make_unique<Sh0tyGS424Processor>();
         case ModuleType::Ff1:      return std::make_unique<Sh0tyFF1Processor>();
+        case ModuleType::Re201:    return std::make_unique<Sh0tyRE201Processor>();
     }
     return nullptr;
 }

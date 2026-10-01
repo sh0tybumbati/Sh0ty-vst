@@ -116,6 +116,21 @@ target_compile_definitions(Sh0tyFF1 PUBLIC JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0 JU
 target_link_libraries(Sh0tyFF1 PRIVATE Sh0tyAssets juce::juce_audio_utils juce::juce_dsp
     PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_warning_flags)
 
+juce_add_plugin(Sh0tyRE201
+    COMPANY_NAME "Sh0ty"
+    PLUGIN_MANUFACTURER_CODE Sh0t
+    PLUGIN_CODE Re20
+    FORMATS ${PLUGIN_FORMATS}
+    PRODUCT_NAME "Sh0ty RE-201 Space Echo"
+    IS_SYNTH FALSE
+    NEEDS_MIDI_INPUT FALSE
+    NEEDS_MIDI_OUTPUT FALSE
+    COPY_PLUGIN_AFTER_BUILD FALSE)
+target_sources(Sh0tyRE201 PRIVATE Source/ReProcessor.cpp Source/ReProcessor.h Source/ReEditor.cpp Source/ReEditor.h)
+target_compile_definitions(Sh0tyRE201 PUBLIC JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0 JUCE_VST3_CAN_REPLACE_VST2=0)
+target_link_libraries(Sh0tyRE201 PRIVATE juce::juce_audio_utils juce::juce_dsp
+    PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_warning_flags)
+
 # JUCE-free DSP test (harmonics, DC, gain, stability)
 option(KTG1_BUILD_TESTS "Build DSP tests" ON)
 if(KTG1_BUILD_TESTS)
@@ -135,6 +150,9 @@ if(KTG1_BUILD_TESTS)
     add_executable(ff1_dsp_test tests/ff1_test.cpp)
     target_include_directories(ff1_dsp_test PRIVATE Source)
     add_test(NAME ff1 COMMAND ff1_dsp_test)
+    add_executable(re201_dsp_test tests/re201_test.cpp)
+    target_include_directories(re201_dsp_test PRIVATE Source)
+    add_test(NAME re201 COMMAND re201_dsp_test)
 endif()
 
 # Renders the FZ-3 / BD-2 editors to a PNG (used to review the UI headlessly under xvfb).
@@ -166,7 +184,8 @@ set(BOARD_PLUGIN_SOURCES
     Source/FuzzProcessor.cpp   Source/FuzzEditor.cpp
     Source/BluesProcessor.cpp  Source/BluesEditor.cpp
     Source/GsProcessor.cpp     Source/GsEditor.cpp
-    Source/FfProcessor.cpp     Source/FfEditor.cpp)
+    Source/FfProcessor.cpp     Source/FfEditor.cpp
+    Source/ReProcessor.cpp     Source/ReEditor.cpp)
 
 option(KTG1_BUILD_PEDALBOARD "Build the pedalboard app" ON)
 if(KTG1_BUILD_PEDALBOARD)
@@ -200,6 +219,10 @@ if(KTG1_BUILD_PEDALBOARD)
         target_compile_definitions(PedalboardSnapshot PRIVATE JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0 JUCE_STANDALONE_APPLICATION=1 SH0TY_STANDALONE_BOARD=1)
         target_link_libraries(PedalboardSnapshot PRIVATE Sh0tyAssets juce::juce_audio_utils juce::juce_dsp juce::juce_recommended_config_flags)
     endif()
+    juce_add_console_app(RE201Snapshot PRODUCT_NAME "RE201Snapshot")
+    target_sources(RE201Snapshot PRIVATE tests/snapshot_re.cpp Source/ReProcessor.cpp Source/ReEditor.cpp)
+    target_compile_definitions(RE201Snapshot PRIVATE JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0 JUCE_STANDALONE_APPLICATION=1)
+    target_link_libraries(RE201Snapshot PRIVATE juce::juce_audio_utils juce::juce_dsp juce::juce_recommended_config_flags)
     juce_add_console_app(FF1Snapshot PRODUCT_NAME "FF1Snapshot")
     target_sources(FF1Snapshot PRIVATE tests/snapshot_ff.cpp Source/FfProcessor.cpp Source/FfEditor.cpp)
     target_compile_definitions(FF1Snapshot PRIVATE JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0 JUCE_STANDALONE_APPLICATION=1)

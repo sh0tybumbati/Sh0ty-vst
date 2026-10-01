@@ -364,6 +364,20 @@ void BoardComponent::layoutAll()
     cableLayer->setBounds (getLocalBounds());
     plugLayer->setBounds (getLocalBounds());
     renderBackground();
+
+    // more rack units push the pedals down: grow the window (within the screen) so they stay visible
+    int need = 0;
+    for (auto& info : model.modules)
+        if (! isRackModule (info.type))
+            if (auto* c = componentFor (info.id)) need = juce::jmax (need, c->getBottom() + 12);
+    if (need > getHeight())
+        if (auto* top = getTopLevelComponent(); top != this && top != nullptr)
+        {
+            const int screenH = juce::Desktop::getInstance().getDisplays().getPrimaryDisplay() != nullptr
+                                    ? juce::Desktop::getInstance().getDisplays().getPrimaryDisplay()->userArea.getHeight() : 1400;
+            const int grown = juce::jmin (top->getHeight() + (need - getHeight()), screenH);
+            if (grown > top->getHeight()) top->setSize (top->getWidth(), grown);
+        }
 }
 
 void BoardComponent::resized()
@@ -647,6 +661,7 @@ void BoardComponent::showAddMenu()
     juce::PopupMenu m;
     m.addSectionHeader ("Rack");
     m.addItem (1, "KTG-1  \xE2\x80\x94  tube preamp (rack unit)");
+    m.addItem (6, "RE-201  \xE2\x80\x94  tape echo + spring reverb (rack unit)");
     m.addSectionHeader ("Pedals");
     m.addItem (2, "FZ-3  \xE2\x80\x94  fuzz");
     m.addItem (3, "BD-2  \xE2\x80\x94  blues driver");
@@ -655,7 +670,7 @@ void BoardComponent::showAddMenu()
     m.showMenuAsync (juce::PopupMenu::Options().withTargetComponent (&addButton), [this] (int r)
     {
         switch (r) { case 1: addModuleOfType (ModuleType::Ktg1); break; case 2: addModuleOfType (ModuleType::Fz3); break;
-                     case 3: addModuleOfType (ModuleType::Bd2);  break; case 4: addModuleOfType (ModuleType::Gs424); break; case 5: addModuleOfType (ModuleType::Ff1); break; default: break; }
+                     case 3: addModuleOfType (ModuleType::Bd2);  break; case 4: addModuleOfType (ModuleType::Gs424); break; case 5: addModuleOfType (ModuleType::Ff1); break; case 6: addModuleOfType (ModuleType::Re201); break; default: break; }
     });
 }
 

@@ -6,6 +6,7 @@ int main (int argc, char** argv)
     BoardModel model;
     juce::AudioDeviceManager dm;
     model.buildDefaultBoard();
+    if (argc > 2 && juce::String (argv[2]) == "re201") model.addModule (ModuleType::Re201);   // a second rack unit under the KTG-1
     {
         BoardComponent board (model, dm);
         board.setSize (1140, 780);
