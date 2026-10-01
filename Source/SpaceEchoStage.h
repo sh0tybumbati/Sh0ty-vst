@@ -17,22 +17,21 @@ constexpr int kModes = 12;
 
 struct ModeInfo { bool head[3]; bool reverb; bool echo; };
 
-// Dial positions follow the front panel: 1-7 are echo (single heads, then combinations), 8-11 echo + reverb,
-// 12 reverb only.
+// Dial positions: 1-4 echo only (heads 1, 2, 3, then 1 + 2), 5-11 echo + spring reverb with the head combinations, 12 reverb only.
 inline ModeInfo modeInfo (int mode)
 {
     static const ModeInfo table[kModes] = {
-        { { false, false, true  }, false, true  },   //  1  head 3
+        { { true,  false, false }, false, true  },   //  1  head 1
         { { false, true,  false }, false, true  },   //  2  head 2
-        { { true,  false, false }, false, true  },   //  3  head 1
-        { { false, true,  true  }, false, true  },   //  4  heads 2 + 3
-        { { true,  true,  false }, false, true  },   //  5  heads 1 + 2
-        { { true,  false, true  }, false, true  },   //  6  heads 1 + 3
-        { { true,  true,  true  }, false, true  },   //  7  heads 1 + 2 + 3
-        { { false, false, true  }, true,  true  },   //  8  head 3 + reverb
-        { { false, true,  false }, true,  true  },   //  9  head 2 + reverb
-        { { true,  false, false }, true,  true  },   // 10  head 1 + reverb
-        { { true,  true,  true  }, true,  true  },   // 11  heads 1 + 2 + 3 + reverb
+        { { false, false, true  }, false, true  },   //  3  head 3
+        { { true,  true,  false }, false, true  },   //  4  heads 1 + 2
+        { { true,  false, false }, true,  true  },   //  5  head 1 + reverb
+        { { false, true,  false }, true,  true  },   //  6  head 2 + reverb
+        { { false, false, true  }, true,  true  },   //  7  head 3 + reverb
+        { { true,  true,  false }, true,  true  },   //  8  heads 1 + 2 + reverb
+        { { false, true,  true  }, true,  true  },   //  9  heads 2 + 3 + reverb
+        { { true,  false, true  }, true,  true  },   // 10  heads 1 + 3 + reverb
+        { { true,  true,  true  }, true,  true  },   // 11  all heads + reverb
         { { false, false, false }, true,  false },   // 12  reverb only
     };
     return table[std::clamp (mode, 1, kModes) - 1];
@@ -44,7 +43,7 @@ constexpr float kHeadRatio[3] = { 1.f, 2.f, 3.f };
 
 struct Params
 {
-    int   mode = 7;
+    int   mode = 4;
     float repeatRate = 0.5f;
     float intensity = 0.35f;
     float echoVol = 0.6f;

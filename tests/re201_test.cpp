@@ -62,14 +62,14 @@ int main()
         {
             p.mode = m; auto y = impulse (p, 1.4);
             auto pk = peaks (y, 0.02f, 400);
-            const double want = t1 * re201::kHeadRatio[3 - m];
+            const double want = t1 * re201::kHeadRatio[m - 1];
             std::printf ("      mode %d: %zu echo(es), first at %.1f ms (want %.1f)\n", m, pk.size(), pk.empty() ? 0.0 : pk[0] * 1000 / FS, want * 1000);
             CHECK (pk.size() == 1 && std::fabs (pk[0] / FS - want) < 0.003, "single-head modes: one echo at the right head position");
         }
-        p.mode = 7; auto y = impulse (p, 1.4); auto pk = peaks (y, 0.02f, 400);
-        CHECK (pk.size() == 3, "mode 7 gives three echoes");
+        p.mode = 11; p.reverbVol = 0.f; auto y = impulse (p, 1.4); auto pk = peaks (y, 0.02f, 400);
+        CHECK (pk.size() == 3, "mode 11 (all heads, reverb off) gives three echoes");
         if (pk.size() == 3) CHECK (std::fabs ((pk[1] - pk[0]) / FS - t1) < 0.003 && std::fabs ((pk[2] - pk[1]) / FS - t1) < 0.003, "the three echoes are evenly spaced (1x, 2x, 3x)");
-        p.mode = 4; pk = peaks (impulse (p, 1.4), 0.02f, 400); CHECK (pk.size() == 2, "mode 4 (heads 2 + 3) gives two echoes");
+        p.mode = 4; pk = peaks (impulse (p, 1.4), 0.02f, 400); CHECK (pk.size() == 2, "mode 4 (heads 1 + 2) gives two echoes");
     }
     // --- REPEAT RATE changes the spacing ---
     {
@@ -79,7 +79,7 @@ int main()
     }
     // --- INTENSITY: repeats ---
     {
-        auto p = base(); p.mode = 3;
+        auto p = base(); p.mode = 1;
         p.intensity = 0.f;  auto y0 = impulse (p, 2.0);
         p.intensity = 0.5f; auto y1 = impulse (p, 2.0);
         p.intensity = 0.9f; auto y2 = impulse (p, 2.0);
@@ -95,7 +95,7 @@ int main()
     }
     // --- runaway is bounded, no NaN, no DC ---
     {
-        auto p = base(); p.mode = 7; p.intensity = 1.f; p.echoVol = 1.f; p.reverbVol = 1.f; p.wow = 1.f;
+        auto p = base(); p.mode = 11; p.intensity = 1.f; p.echoVol = 1.f; p.reverbVol = 1.f; p.wow = 1.f;
         re201::SpaceEcho e; e.prepare (FS); e.setParams (p); e.reset();
         float mx = 0; double dc = 0; unsigned s = 7;
         for (int n = 0; n < (int) (FS * 20); ++n)

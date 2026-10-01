@@ -75,9 +75,8 @@ analogue VU, radiation-trefoil PEAK lamp, chrome and Bakelite dials and a hazard
   60 ms), and the motor slews, so turning it bends the pitch like the real thing. Wow and flutter, a head/tape bandwidth
   roll-off that dulls every repeat, and a soft-saturating record path so INTENSITY can run away into self-oscillation
   without blowing up.
-- **MODE SELECTOR** (12 positions): 1-3 single heads, 4-7 head combinations, 8-11 echo + spring reverb, 12 spring only.
-  The head combinations follow common documentation of the unit rather than a measurement of one, so treat them as an
-  approximation; the table is `modeInfo()` in `Source/SpaceEchoStage.h`.
+- **MODE SELECTOR** (12 positions): 1-3 single heads (1 shortest), 4 heads 1+2, 5-11 spring reverb with head 1 / 2 / 3 / 1+2 / 2+3 / 1+3 / all three, 12 spring only.
+  The table follows published descriptions of the unit rather than a measurement of one; it is `modeInfo()` in `Source/SpaceEchoStage.h`.
 - **Spring reverb**: two springs, each a delay with a chain of dispersive allpasses (the chirpy "boing"), damping and feedback.
 - **Controls**: MIC VOLUME 1 / 2 (how much of the left / right input is sent to the echo), INSTRUMENT VOLUME (overall
   send, and drive into the pre-amp), BASS, TREBLE, REVERB VOLUME, REPEAT RATE, INTENSITY, ECHO VOLUME, OUTPUT LEVEL H/M/L,

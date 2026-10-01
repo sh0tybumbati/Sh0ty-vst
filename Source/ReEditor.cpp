@@ -358,8 +358,8 @@ void Sh0tyRE201Editor::renderBackground()
         g.setColour (cream.withAlpha (0.25f));
         juce::Path arc; arc.addCentredArc (c.x, c.y, 57.f, 57.f, 0.f, kStart - 0.1f, kEnd + 0.1f, true);
         g.strokePath (arc, juce::PathStrokeType (1.2f));
-        text (g, "1-7  ECHO", { 336, 292, 80, 12 }, 7.5f, cream.withAlpha (0.8f), juce::Justification::centredLeft, 0.14f);
-        text (g, "8-11  ECHO + REVERB", { 502, 292, 96, 12 }, 7.5f, amber.withAlpha (0.9f), juce::Justification::centredRight, 0.1f);
+        text (g, "1-4  ECHO", { 336, 292, 80, 12 }, 7.5f, cream.withAlpha (0.8f), juce::Justification::centredLeft, 0.14f);
+        text (g, "5-11  ECHO + REVERB", { 502, 292, 96, 12 }, 7.5f, amber.withAlpha (0.9f), juce::Justification::centredRight, 0.1f);
         text (g, "REV ONLY", { c.x - 26, c.y + 50, 52, 10 }, 7.f, hazard, juce::Justification::centred, 0.1f);
     }
 
@@ -429,8 +429,8 @@ void Sh0tyRE201Editor::paintCrt (juce::Graphics& g, juce::Rectangle<float> r)
             text (g, s, box.translated (0.6f, 0.f), size, c.withAlpha (0.2f * glow), j, 0.10f);
             text (g, s, box, size, c.withAlpha (glow), j, 0.10f);
         };
-        static const char* names[] = { "HEAD 3", "HEAD 2", "HEAD 1", "HEADS 2+3", "HEADS 1+2", "HEADS 1+3", "HEADS 1+2+3",
-                                       "HEAD 3 + SPRING", "HEAD 2 + SPRING", "HEAD 1 + SPRING", "ALL HEADS + SPRING", "SPRING ONLY" };
+        static const char* names[] = { "HEAD 1", "HEAD 2", "HEAD 3", "HEADS 1+2", "HEAD 1 + SPRING", "HEAD 2 + SPRING", "HEAD 3 + SPRING",
+                                       "HEADS 1+2 + SPRING", "HEADS 2+3 + SPRING", "HEADS 1+3 + SPRING", "ALL HEADS + SPRING", "SPRING ONLY" };
         line (juce::String::formatted ("MODE %02d", m), r.getY() + 5.f, 17.f, phosphor);
         line (names[m - 1], r.getY() + 5.f, 12.f, phosphor, juce::Justification::centredRight);
         line (mi.echo ? (mi.reverb ? "TAPE ECHO + SPRING REVERB" : "TAPE ECHO")  : "SPRING REVERB", r.getY() + 23.f, 9.f, phosphor.withMultipliedBrightness (0.8f));
@@ -568,7 +568,7 @@ void Sh0tyRE201Editor::paint (juce::Graphics& g)
             const float a = kStart + (float) (i - 1) / 11.f * (kEnd - kStart);
             const auto p = c.getPointOnCircumference (70.f, a);
             const bool sel = i == m;
-            const juce::Colour col = sel ? phosphor : (i >= 8 ? amber.withAlpha (0.9f) : cream.withAlpha (0.9f));
+            const juce::Colour col = sel ? phosphor : (i >= 5 ? amber.withAlpha (0.9f) : cream.withAlpha (0.9f));
             if (sel) { g.setColour (phosphor.withAlpha (0.18f)); g.fillEllipse (p.x - 11.f, p.y - 11.f, 22.f, 22.f); }
             text (g, juce::String (i), { p.x - 11.f, p.y - 7.f, 22.f, 14.f }, sel ? 13.f : 11.f, col, juce::Justification::centred, 0.f);
             const auto t0 = c.getPointOnCircumference (55.f, a), t1 = c.getPointOnCircumference (59.f, a);

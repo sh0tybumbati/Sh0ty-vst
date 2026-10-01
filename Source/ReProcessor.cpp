@@ -13,7 +13,7 @@ Sh0tyRE201Processor::Sh0tyRE201Processor()
               p.push_back (std::make_unique<juce::AudioParameterFloat> (
                   juce::ParameterID { id, 1 }, name, juce::NormalisableRange<float> (0.f, 1.f, 0.001f), def)); };
           add ("mic1", "Mic Volume 1", 0.7f); add ("mic2", "Mic Volume 2", 0.7f); add ("inst", "Instrument Volume", 0.7f);
-          p.push_back (std::make_unique<juce::AudioParameterInt> (juce::ParameterID { "mode", 1 }, "Mode Selector", 1, 12, 7));
+          p.push_back (std::make_unique<juce::AudioParameterInt> (juce::ParameterID { "mode", 1 }, "Mode Selector", 1, 12, 4));
           add ("bass", "Bass", 0.5f); add ("treble", "Treble", 0.5f); add ("reverb", "Reverb Volume", 0.3f);
           add ("rate", "Repeat Rate", 0.5f); add ("intensity", "Intensity", 0.35f); add ("echo", "Echo Volume", 0.6f);
           p.push_back (std::make_unique<juce::AudioParameterChoice> (juce::ParameterID { "outlevel", 1 }, "Output Level",
