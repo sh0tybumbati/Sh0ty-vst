@@ -27,8 +27,12 @@ int main()
     // an empty board is silent (nothing connects input to output)
     CHECK (runBlocks (board, 0.2f) == 0.f, "nothing patched: silence");
 
-    // Guitar In -> Output straight through
+    // Guitar In -> Output straight through. Guitar In must start muted (feedback protection).
     CHECK (board.connect (BoardModel::kInputId, BoardModel::kOutputId), "patch Guitar In -> Output");
+    auto* inTerm = dynamic_cast<InputTerminal*> (board.processorFor (BoardModel::kInputId));
+    CHECK (inTerm->muted.load(), "Guitar In starts muted");
+    CHECK (runBlocks (board, 0.2f) == 0.f, "muted input is silent even when patched through");
+    inTerm->muted = false;
     const float direct = runBlocks (board, 0.2f);
     CHECK (std::fabs (direct - 0.2f) < 0.01f, "straight cable passes the signal unchanged");
     CHECK (! board.connect (BoardModel::kOutputId, BoardModel::kInputId), "cannot patch backwards (Output -> Guitar In)");
@@ -74,7 +78,10 @@ int main()
     auto* out = dynamic_cast<OutputTerminal*> (board.processorFor (BoardModel::kOutputId)); out->volume = 0.5f;
     auto xml = board.toXml();
     BoardModel other;
+    CHECK (dynamic_cast<InputTerminal*> (other.processorFor (BoardModel::kInputId))->muted.load(), "a fresh board starts muted");
     CHECK (other.loadXml (*xml), "load board XML");
+    CHECK (dynamic_cast<InputTerminal*> (other.processorFor (BoardModel::kInputId))->muted.load(), "loading a saved board does not unmute the input");
+    dynamic_cast<InputTerminal*> (other.processorFor (BoardModel::kInputId))->muted = false;
     CHECK (other.modules.size() == board.modules.size() && other.cables.size() == board.cables.size(), "module and cable counts survive a save/load");
     other.graph.setPlayConfigDetails (2, 2, 48000.0, 512); other.graph.prepareToPlay (48000.0, 512);
     CHECK (dynamic_cast<OutputTerminal*> (other.processorFor (BoardModel::kOutputId))->volume.load() == 0.5f, "settings survive a save/load");

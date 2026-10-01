@@ -43,7 +43,7 @@ ModuleComponent::ModuleComponent (BoardComponent& b, BoardModel& m, int moduleId
     if (isTerminalModule (type))
     {
         margin = 24;
-        body = { margin, headerH, 124, 118 };
+        body = { margin, headerH, 124, 194 };
         knob.setSliderStyle (juce::Slider::RotaryVerticalDrag);
         knob.setTextBoxStyle (juce::Slider::TextBoxBelow, false, 70, 16);
         addAndMakeVisible (knob);
@@ -55,6 +55,29 @@ ModuleComponent::ModuleComponent (BoardComponent& b, BoardModel& m, int moduleId
             monoToggle.setToggleState (in->mono.load(), juce::dontSendNotification);
             monoToggle.onClick = [this, in] { in->mono = monoToggle.getToggleState(); };
             addAndMakeVisible (monoToggle);
+
+            // which input device feeds the board, and the mute switch (muted at every start)
+            sourceBox.setTextWhenNothingSelected ("None");
+            sourceBox.onChange = [this]
+            {
+                const int sel = sourceBox.getSelectedId();
+                board.setInputSource (sel <= 1 ? juce::String() : sourceBox.getText());
+            };
+            addAndMakeVisible (sourceBox);
+            muteButton.setClickingTogglesState (true);
+            muteButton.setToggleState (in->muted.load(), juce::dontSendNotification);
+            auto styleMute = [this] (bool muted)
+            {
+                muteButton.setButtonText (muted ? "MUTED" : "LIVE");
+                muteButton.setColour (juce::TextButton::buttonColourId, muted ? juce::Colour (0xffb3262d) : juce::Colour (0xff1f9d55));
+                muteButton.setColour (juce::TextButton::buttonOnColourId, muted ? juce::Colour (0xffb3262d) : juce::Colour (0xff1f9d55));
+                muteButton.setColour (juce::TextButton::textColourOffId, juce::Colours::white);
+                muteButton.setColour (juce::TextButton::textColourOnId, juce::Colours::white);
+            };
+            styleMute (in->muted.load());
+            muteButton.onClick = [this, in, styleMute] { in->muted = muteButton.getToggleState(); styleMute (in->muted.load()); };
+            addAndMakeVisible (muteButton);
+            refreshSource();
         }
         else if (auto* out = dynamic_cast<OutputTerminal*> (model.processorFor (id)))
         {
@@ -84,6 +107,18 @@ ModuleComponent::ModuleComponent (BoardComponent& b, BoardModel& m, int moduleId
 
 ModuleComponent::~ModuleComponent() { editor.reset(); }
 
+void ModuleComponent::refreshSource()
+{
+    if (type != ModuleType::GuitarIn) return;
+    sourceBox.clear (juce::dontSendNotification);
+    sourceBox.addItem ("None (no input)", 1);
+    const auto names = board.inputSources();
+    for (int i = 0; i < names.size(); ++i) sourceBox.addItem (names[i], i + 2);
+    const auto cur = board.currentInputSource();
+    const int idx = cur.isEmpty() ? -1 : names.indexOf (cur);
+    sourceBox.setSelectedId (idx >= 0 ? idx + 2 : 1, juce::dontSendNotification);
+}
+
 juce::Point<int> ModuleComponent::localJack (bool output) const
 {
     const int y = headerH + body.getHeight() / 2;
@@ -106,11 +141,15 @@ void ModuleComponent::resized()
         editor->setTopLeftPosition (juce::roundToInt ((float) body.getX() / sc), juce::roundToInt ((float) body.getY() / sc));
     }
     closeButton.setBounds (getWidth() - margin - 20, 2, 18, 16);
-    if (isTerminalModule (type))
+    if (type == ModuleType::GuitarIn)
     {
-        knob.setBounds (body.getX() + 20, body.getY() + 14, 84, 84);
-        monoToggle.setBounds (body.getX() + 28, body.getBottom() - 22, 70, 20);
+        sourceBox.setBounds (body.getX() + 4, body.getY() + 14, 116, 24);
+        knob.setBounds (body.getX() + 20, body.getY() + 54, 84, 84);
+        monoToggle.setBounds (body.getX() + 28, body.getY() + 140, 70, 20);
+        muteButton.setBounds (body.getX() + 8, body.getBottom() - 30, 108, 26);
     }
+    else if (type == ModuleType::Output)
+        knob.setBounds (body.getX() + 20, body.getY() + 40, 84, 84);
 }
 
 void ModuleComponent::paint (juce::Graphics& g)
@@ -147,14 +186,20 @@ void ModuleComponent::paint (juce::Graphics& g)
     if (isTerminalModule (type))
     {
         g.setColour (textDim); g.setFont (juce::FontOptions (9.f, juce::Font::bold));
-        g.drawText (type == ModuleType::GuitarIn ? "GAIN" : "VOLUME", juce::Rectangle<float> ((float) body.getX(), (float) body.getY() + 1.f, 124.f, 11.f), juce::Justification::centred);
+        if (type == ModuleType::GuitarIn)
+        {
+            g.drawText ("SOURCE", juce::Rectangle<float> ((float) body.getX(), (float) body.getY() + 1.f, 124.f, 11.f), juce::Justification::centred);
+            g.drawText ("GAIN", juce::Rectangle<float> ((float) body.getX(), (float) body.getY() + 42.f, 124.f, 11.f), juce::Justification::centred);
+        }
+        else
+            g.drawText ("VOLUME", juce::Rectangle<float> ((float) body.getX(), (float) body.getY() + 26.f, 124.f, 11.f), juce::Justification::centred);
     }
     if (isTerminalModule (type) && type == ModuleType::Output)
     {
         // level meter next to the knob
         auto* out = dynamic_cast<OutputTerminal*> (model.processorFor (id));
         const float lvl = out != nullptr ? juce::jlimit (0.f, 1.f, (juce::Decibels::gainToDecibels (out->peak.load(), -60.f) + 60.f) / 63.f) : 0.f;
-        const auto m = juce::Rectangle<float> ((float) body.getRight() - 14.f, (float) body.getY() + 10.f, 8.f, 90.f);
+        const auto m = juce::Rectangle<float> ((float) body.getRight() - 14.f, (float) body.getY() + 40.f, 8.f, 120.f);
         g.setColour (juce::Colour (0xff0b0b0e)); g.fillRect (m);
         g.setColour (lvl > 0.93f ? juce::Colour (0xffff3d7f) : juce::Colour (0xff4dff88)); g.fillRect (m.withTop (m.getBottom() - m.getHeight() * lvl));
     }
@@ -245,12 +290,14 @@ BoardComponent::BoardComponent (BoardModel& m, juce::AudioDeviceManager& dm) : m
     resetButton.setTooltip ("Back to the default board");
 
     model.onStructureChanged = [this] { syncModules(); };
+    deviceManager.addChangeListener (this);
     syncModules();
     startTimerHz (30);
 }
 
 BoardComponent::~BoardComponent()
 {
+    deviceManager.removeChangeListener (this);
     model.onStructureChanged = nullptr;
     stopTimer();
     destroyModuleComponents();
@@ -609,6 +656,31 @@ void BoardComponent::showAddMenu()
         switch (r) { case 1: addModuleOfType (ModuleType::Ktg1); break; case 2: addModuleOfType (ModuleType::Fz3); break;
                      case 3: addModuleOfType (ModuleType::Bd2);  break; case 4: addModuleOfType (ModuleType::Gs424); break; default: break; }
     });
+}
+
+void BoardComponent::changeListenerCallback (juce::ChangeBroadcaster*)
+{
+    if (auto* c = componentFor (BoardModel::kInputId)) c->refreshSource();
+}
+
+juce::StringArray BoardComponent::inputSources() const
+{
+    if (auto* type = deviceManager.getCurrentDeviceTypeObject()) return type->getDeviceNames (true);
+    return {};
+}
+
+juce::String BoardComponent::currentInputSource() const
+{
+    const auto setup = deviceManager.getAudioDeviceSetup();
+    return setup.inputChannels.isZero() ? juce::String() : setup.inputDeviceName;
+}
+
+void BoardComponent::setInputSource (const juce::String& name)
+{
+    auto setup = deviceManager.getAudioDeviceSetup();
+    if (name.isEmpty()) { setup.inputDeviceName = {}; setup.inputChannels.clear(); setup.useDefaultInputChannels = false; }
+    else                { setup.inputDeviceName = name; setup.useDefaultInputChannels = true; }
+    deviceManager.setAudioDeviceSetup (setup, true);
 }
 
 void BoardComponent::showAudioSettings()

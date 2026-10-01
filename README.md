@@ -18,8 +18,10 @@ A standalone app that hosts all four plugins at once, with the KTG-1 as a rack u
 below. **Drag** a unit by its header to move it (rack units slide up and down). **Drag from a jack** to another jack to
 patch a virtual cable (a stereo pair; a cable that would make a loop is refused). **Double-click** a cable, or right-click
 and choose Delete, to remove it. Cables run under the pedals and over the rack units, with the plug heads and the stub at
-each jack kept on top so they still read as plugged in. Use **+ ADD** to add more units (several of each are fine). **Guitar In** has a gain
-knob and a MONO switch (copies input 1 to both channels, which is what a guitar on a single input needs); **Output** has a
+each jack kept on top so they still read as plugged in. Use **+ ADD** to add more units (several of each are fine). **Guitar In** has a source
+dropdown, a gain knob, a MONO switch (copies input 1 to both channels, which is what a guitar on a single input needs) and a
+MUTED / LIVE switch. To avoid feedback, the app **starts with no input device open and Guitar In muted**: pick a source,
+then switch it to LIVE (use headphones if the source is a microphone); **Output** has a
 master volume and a level meter. Save and Load write `.sh0tyboard` files, and the app reopens your last board and audio
 device. It is built as part of the normal build (`-DKTG1_BUILD_PEDALBOARD=OFF` to skip it); on macOS it is a universal
 (Apple Silicon + Intel) app, unsigned like the plugins. Run it from `build/Sh0tyPedalboard_artefacts/Release/`.

@@ -17,6 +17,7 @@ public:
     bool hasInputJack() const  { return type != ModuleType::GuitarIn; }
     bool hasOutputJack() const { return type != ModuleType::Output; }
     juce::Point<int> getJackPosition (bool output) const;     // in the board's coordinates
+    void refreshSource();                                     // Guitar In: re-read the list of inputs and the current choice
 
     void paint (juce::Graphics&) override;
     void resized() override;
@@ -36,6 +37,8 @@ private:
     juce::TextButton closeButton { "x" };
     juce::Slider knob;                      // terminals only
     juce::ToggleButton monoToggle { "MONO" };
+    juce::ComboBox sourceBox;               // Guitar In: which input device feeds the board
+    juce::TextButton muteButton { "MUTED" };
 
     enum class Drag { None, Move, Cable } drag = Drag::None;
     bool cableFromOutput = false;
@@ -47,7 +50,7 @@ private:
 };
 
 // The pedalboard: rack units on top, pedals below, virtual cables over everything.
-class BoardComponent : public juce::Component, private juce::Timer
+class BoardComponent : public juce::Component, private juce::Timer, private juce::ChangeListener
 {
 public:
     BoardComponent (BoardModel&, juce::AudioDeviceManager&);
@@ -68,6 +71,9 @@ public:
     // actions
     void showAddMenu();
     void showAudioSettings();
+    juce::StringArray inputSources() const;            // names of the available input devices
+    juce::String currentInputSource() const;          // empty when no input device is open
+    void setInputSource (const juce::String& name);   // empty = close the input device
     void saveBoard();
     void loadBoard();
     void resetBoard();
@@ -91,6 +97,7 @@ public:
 private:
     friend class CableLayer;
     void timerCallback() override;
+    void changeListenerCallback (juce::ChangeBroadcaster*) override;
     void syncModules();
     void destroyModuleComponents();
     void layoutAll();

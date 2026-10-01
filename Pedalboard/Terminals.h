@@ -32,9 +32,11 @@ public:
     void processBlock (juce::AudioBuffer<float>& b, juce::MidiBuffer&) override
     {
         const int n = b.getNumSamples();
+        if (muted.load()) { b.clear(); return; }
         if (b.getNumChannels() >= 2 && mono.load()) b.copyFrom (1, 0, b, 0, 0, n);
         b.applyGain (gain.load());
     }
+    std::atomic<bool>  muted { true };    // always starts muted: an open mic next to the speakers is a feedback loop
     std::atomic<bool>  mono { true };
     std::atomic<float> gain { 1.f };
 };

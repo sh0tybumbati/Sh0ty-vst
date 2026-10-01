@@ -17,6 +17,11 @@ public:
         std::unique_ptr<juce::XmlElement> audioState;
         if (audioFile().existsAsFile()) audioState = juce::XmlDocument::parse (audioFile());
         deviceManager.initialise (2, 2, audioState.get(), true);
+        {   // always start with no input device open: an open mic next to the speakers is an instant feedback loop
+            auto setup = deviceManager.getAudioDeviceSetup();
+            setup.inputDeviceName = {}; setup.inputChannels.clear(); setup.useDefaultInputChannels = false;
+            deviceManager.setAudioDeviceSetup (setup, true);
+        }
         deviceManager.addChangeListener (this);
 
         // build the board (default, or the one from last time) while the graph is not yet running
