@@ -82,6 +82,21 @@ target_compile_definitions(Sh0tyBD2 PUBLIC JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0 JU
 target_link_libraries(Sh0tyBD2 PRIVATE juce::juce_audio_utils juce::juce_dsp
     PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_warning_flags)
 
+juce_add_plugin(Sh0tyGS424
+    COMPANY_NAME "Sh0ty"
+    PLUGIN_MANUFACTURER_CODE Sh0t
+    PLUGIN_CODE Gs42
+    FORMATS ${PLUGIN_FORMATS}
+    PRODUCT_NAME "Sh0ty GS-424 Gain Stage"
+    IS_SYNTH FALSE
+    NEEDS_MIDI_INPUT FALSE
+    NEEDS_MIDI_OUTPUT FALSE
+    COPY_PLUGIN_AFTER_BUILD FALSE)
+target_sources(Sh0tyGS424 PRIVATE Source/GsProcessor.cpp Source/GsProcessor.h Source/GsEditor.cpp Source/GsEditor.h)
+target_compile_definitions(Sh0tyGS424 PUBLIC JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0 JUCE_VST3_CAN_REPLACE_VST2=0)
+target_link_libraries(Sh0tyGS424 PRIVATE juce::juce_audio_utils juce::juce_dsp
+    PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_warning_flags)
+
 # JUCE-free DSP test (harmonics, DC, gain, stability)
 option(KTG1_BUILD_TESTS "Build DSP tests" ON)
 if(KTG1_BUILD_TESTS)
@@ -95,6 +110,9 @@ if(KTG1_BUILD_TESTS)
     add_executable(bd2_dsp_test tests/blues_test.cpp)
     target_include_directories(bd2_dsp_test PRIVATE Source)
     add_test(NAME blues COMMAND bd2_dsp_test)
+    add_executable(gs424_dsp_test tests/gs424_test.cpp)
+    target_include_directories(gs424_dsp_test PRIVATE Source)
+    add_test(NAME gs424 COMMAND gs424_dsp_test)
 endif()
 
 # Renders the FZ-3 / BD-2 editors to a PNG (used to review the UI headlessly under xvfb).
@@ -112,4 +130,8 @@ if(KTG1_BUILD_UI_SNAPSHOT)
     target_sources(KTG1Snapshot PRIVATE tests/snapshot_ktg.cpp Source/PluginProcessor.cpp Source/KtgEditor.cpp)
     target_compile_definitions(KTG1Snapshot PRIVATE JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0 JUCE_STANDALONE_APPLICATION=1)
     target_link_libraries(KTG1Snapshot PRIVATE juce::juce_audio_utils juce::juce_dsp juce::juce_recommended_config_flags)
+    juce_add_console_app(GS424Snapshot PRODUCT_NAME "GS424Snapshot")
+    target_sources(GS424Snapshot PRIVATE tests/snapshot_gs.cpp Source/GsProcessor.cpp Source/GsEditor.cpp)
+    target_compile_definitions(GS424Snapshot PRIVATE JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0 JUCE_STANDALONE_APPLICATION=1)
+    target_link_libraries(GS424Snapshot PRIVATE juce::juce_audio_utils juce::juce_dsp juce::juce_recommended_config_flags)
 endif()

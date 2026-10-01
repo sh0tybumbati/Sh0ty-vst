@@ -1,12 +1,13 @@
 # Sh0ty VST plugins
 
-Three guitar-pedal / preamp plugins (VST3, AU on macOS, and Standalone), built with JUCE:
+Four guitar-pedal / preamp plugins (VST3, AU on macOS, and Standalone), built with JUCE:
 
 | Plugin | Inspired by | Interface |
 |---|---|---|
 | **Sh0ty KTG-1** | Seymour Duncan KTG-1 two-channel tube preamp | Bauhaus |
 | **Sh0ty FZ-3 Fuzz** | Boss FZ-3 | Art deco |
 | **Sh0ty BD-2 Blues Driver** | Boss BD-2 | Art nouveau |
+| **Sh0ty GS-424 Gain Stage** | Tascam Portastudio 424 MKIII input stage + Baxandall EQ | Retro cassette |
 
 These are "inspired by" models, not component-level circuit simulations. Interfaces are original artwork.
 
@@ -36,7 +37,7 @@ Apple's `auval` on each AU (informational).
 
 The plugins are **not notarized or signed with a developer ID**. If a downloaded copy is blocked by Gatekeeper, run
 `xattr -dr com.apple.quarantine <plugin>` on it, or right-click it and choose Open. Validate an AU with
-`auval -v aufx Ktg1 Sh0t` (KTG-1), `Fz3x` (FZ-3) or `Bd2x` (BD-2). Logic Pro only lists AUs that pass `auval`.
+`auval -v aufx Ktg1 Sh0t` (KTG-1), `Fz3x` (FZ-3), `Bd2x` (BD-2) or `Gs42` (GS-424). Logic Pro only lists AUs that pass `auval`.
 
 ### CachyOS / Arch Linux
     sudo pacman -S --needed base-devel cmake git alsa-lib freetype2 fontconfig \
@@ -71,6 +72,17 @@ is an "inspired by" model of generic triode-stage behaviour. Pull boost is model
 shelf (unity below the cap corner, extra gain above it), with a pre-distortion high-pass to keep the low end tight;
 the tone stack is three decoupled EQ bands (a passive interactive stack is not modelled). Voicings and the signal
 order are estimates. Bauhaus interface with original artwork.
+
+## GS-424 Gain Stage
+![GS-424 editor](docs/gs424-ui.png)
+
+Modelled from the Tascam 424 MKIII channel input stage (service-manual MIX PCB 2/4). **Gain 1** is the 424's
+trim: the R22 10k rheostat in the Q201/Q202 (2SC732) differential pair, solved sample by sample
+(`Vd = Vt ln((I+i)/(I-i)) + i*Rlink`), giving the schematic's ~4 dB to ~51 dB. **Gain 2** makes the U101B
+difference amplifier's R211/R212 (8.2k stock) variable up to 82k; that is a pedal addition, not in the 424.
+**Bass** and **Treble** are the 424's Baxandall HIGH / LOW EQ (U202B), computed from its netlist by
+`tools/gen_baxandall.py` into `Source/PortaEq.h`. Volume follows the EQ; the mid band and the mic-input loading are
+not modelled. The VU meter and cassette reels follow the output level. Original artwork.
 
 ## FZ-3 model
 The FZ-3 DSP follows the signal path of the "Boss FZ3" schematic (JFET buffers, Q1 treble shelf,

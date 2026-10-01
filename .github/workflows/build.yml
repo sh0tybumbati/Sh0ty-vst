@@ -31,6 +31,7 @@ jobs:
           auval -v aufx Ktg1 Sh0t
           auval -v aufx Fz3x Sh0t
           auval -v aufx Bd2x Sh0t
+          auval -v aufx Gs42 Sh0t
 
       # macOS bundles must be zipped with ditto to keep their structure and permissions
       - name: Package (macOS)
