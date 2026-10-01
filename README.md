@@ -7,7 +7,7 @@ Four guitar-pedal / preamp plugins (VST3, AU on macOS, and Standalone), built wi
 | **Sh0ty KTG-1** | Seymour Duncan KTG-1 two-channel tube preamp | Bauhaus |
 | **Sh0ty FZ-3 Fuzz** | Boss FZ-3 | Art deco |
 | **Sh0ty BD-2 Blues Driver** | Boss BD-2 | Art nouveau |
-| **Sh0ty GS-424 Gain Stage** | Tascam Portastudio 424 MKIII input stage + Baxandall EQ | 80s street art |
+| **Sh0ty GS-424 Gain Stage** | Tascam Portastudio 424 MKIII input stage + Baxandall EQ | Minimal street art |
 
 These are "inspired by" models, not component-level circuit simulations. Interfaces are original artwork.
 
@@ -82,7 +82,7 @@ trim: the R22 10k rheostat in the Q201/Q202 (2SC732) differential pair, solved s
 difference amplifier's R211/R212 (8.2k stock) variable up to 82k; that is a pedal addition, not in the 424.
 **Bass** and **Treble** are the 424's Baxandall HIGH / LOW EQ (U202B), computed from its netlist by
 `tools/gen_baxandall.py` into `Source/PortaEq.h`. Volume follows the EQ; the mid band and the mic-input loading are
-not modelled. The LED bar meter and cassette-sticker reels follow the output level. 80s street-art interface (brick wall, neon spray, graffiti lettering), original artwork.
+not modelled. The LED bar meter and the two stencilled reels follow the output level. Minimal street-art interface (concrete wall, one spray-painted circle, stencil lettering), original artwork.
 
 ## FZ-3 model
 The FZ-3 DSP follows the signal path of the "Boss FZ3" schematic (JFET buffers, Q1 treble shelf,

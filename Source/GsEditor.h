@@ -1,9 +1,9 @@
 #pragma once
 #include "GsProcessor.h"
 
-// 80s street-art editor for the GS-424. Layout follows the pedal reference: VOLUME / GAIN 2 / GAIN 1 on top,
-// BASS / TREBLE below. A brick wall, neon spray paint, graffiti lettering, masking-tape labels, an LED bar meter and
-// a die-cut cassette sticker whose reels turn with the signal. All artwork is original and drawn in code.
+// Minimal street-art editor for the GS-424. Layout follows the pedal reference: VOLUME / GAIN 2 / GAIN 1 on top,
+// BASS / TREBLE below. A concrete wall, one spray-painted circle, stencil lettering, a thin LED-bar meter and two
+// stencilled reels that turn with the signal. All artwork is original and drawn in code.
 class StreetLookAndFeel : public juce::LookAndFeel_V4
 {
 public:
