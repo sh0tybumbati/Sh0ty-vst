@@ -59,10 +59,11 @@ also uses a bias trimmer value); germanium biases to the textbook -0.65 V / -4.9
 **Volume**, **Fuzz**, **Ge / Si**, footswitch and a small input **Trim** (it is a level-sensitive circuit, so trim
 matters). Simplifications: ideal battery (no sag), the guitar is a plain 6k8 source resistor (no pickup inductance),
 a gentle roll-off stands in for transistor bandwidth, no temperature drift. It runs at 2x oversampling because the
-solve is the expensive part. The artwork is a supplied psychedelic Sasquatch poster (`Assets/fuzzface.jpg`) with the controls placed on the lettering
-painted into it: eyeball dials for VOLUME and FUZZ over the two swirl orbs, TRIM on his chest, the Ge / Si switch on the
-tree, the stomp button between his feet and a star in the rainbow as the status light. The artwork is the user's own
-supplied image; its rights are theirs to sort out before the plugin is shared.
+solve is the expensive part. The artwork is a supplied psychedelic Sasquatch poster (`Assets/fuzzface.jpg`) with the hardware placed on the lettering
+painted into it: knurled brass dials for VOLUME and FUZZ over the two swirl orbs, a small brass TRIM on his chest, a nickel
+toggle lever between the Ge and Si labels (thrown left for germanium, right for silicon), a domed brass stomp button between
+his feet and a brass-bezel jewel as the status light. The artwork is the user's own supplied image; its rights are theirs
+to sort out before the plugin is shared.
 
 ## RE-201 Space Echo
 ![RE-201](docs/re201-ui.png)

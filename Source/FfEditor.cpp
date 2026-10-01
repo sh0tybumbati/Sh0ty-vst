@@ -18,146 +18,136 @@ juce::Colour rainbow (int i)
     return c[(size_t) (((i % 7) + 7) % 7)];
 }
 
-juce::Font marker (float size, bool italic = true, float kern = 0.03f)
-{
-    juce::Font f (juce::FontOptions (size, italic ? (juce::Font::bold | juce::Font::italic) : juce::Font::bold));
-    f.setExtraKerningFactor (kern);
-    return f;
-}
-
-void stroke (juce::Graphics& g, const juce::Path& p, juce::Colour c, float w)
-{
-    g.setColour (ink); g.strokePath (p, juce::PathStrokeType (w + 4.f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
-    g.setColour (c);   g.strokePath (p, juce::PathStrokeType (w, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
-}
-
-juce::Path spiral (juce::Point<float> c, float r, float turns)
-{
-    juce::Path p;
-    const int n = 70;
-    for (int i = 0; i <= n; ++i)
-    {
-        const float t = (float) i / (float) n, a = t * turns * juce::MathConstants<float>::twoPi, rr = r * (0.12f + 0.88f * t);
-        const auto pt = c.getPointOnCircumference (rr, a);
-        if (i == 0) p.startNewSubPath (pt); else p.lineTo (pt);
-    }
-    return p;
-}
-
-// smooth open curve through points (Catmull-Rom -> cubic Beziers)
-juce::Path smoothOpen (const std::vector<juce::Point<float>>& p)
-{
-    juce::Path path;
-    const int n = (int) p.size();
-    if (n < 3) return path;
-    auto at = [&] (int i) { return p[(size_t) juce::jlimit (0, n - 1, i)]; };
-    path.startNewSubPath (p[0]);
-    for (int i = 0; i < n - 1; ++i)
-    {
-        const auto p0 = at (i - 1), p1 = at (i), p2 = at (i + 1), p3 = at (i + 2);
-        path.cubicTo (p1 + (p2 - p0) / 6.f, p2 - (p3 - p1) / 6.f, p2);
-    }
-    return path;
-}
-
-// marker lettering: coloured fill, thick ink outline, optional offset shadow
-void lettering (juce::Graphics& g, const juce::String& text, juce::Point<float> at, float size, juce::Colour fill,
-                bool centred, juce::Colour shadow = juce::Colours::transparentBlack, bool italic = true)
-{
-    juce::GlyphArrangement ga;
-    ga.addLineOfText (marker (size, italic, 0.05f), text, 0.f, 0.f);
-    const auto bb = ga.getBoundingBox (0, -1, true);
-    ga.removeRangeOfGlyphs (0, -1);
-    ga.addLineOfText (marker (size, italic, 0.05f), text, centred ? at.x - bb.getWidth() * 0.5f : at.x, at.y);
-    juce::Path p; ga.createPath (p);
-    if (! shadow.isTransparent()) { g.setColour (shadow); g.fillPath (p, juce::AffineTransform::translation (3.5f, 3.5f)); }
-    g.setColour (ink); g.strokePath (p, juce::PathStrokeType (size * 0.2f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
-    g.setColour (fill); g.fillPath (p);
-}
 } // namespace sas
 
 //==============================================================================
-// Knobs are eyeballs: white of the eye, a radial-striped iris (like the drawing's own eyes), a pupil, and a pointer.
+// Hardware is brass: knurled brass dials, a domed brass stomp button and a nickel toggle lever for Ge / Si.
+namespace brass
+{
+const juce::Colour hi { 0xfffbe6a0 }, light { 0xffe8bf55 }, mid { 0xffc8962a }, dark { 0xff7d5410 }, deep { 0xff3b2606 };
+
+juce::ColourGradient body (juce::Point<float> c, float r)     // lit from the upper left
+{
+    juce::ColourGradient gr (light, c.x - r * 0.55f, c.y - r * 0.7f, dark, c.x + r * 0.8f, c.y + r * 0.9f, false);
+    gr.addColour (0.35, mid);
+    return gr;
+}
+} // namespace brass
+
 void MarkerLookAndFeel::drawRotarySlider (juce::Graphics& g, int x, int y, int w, int h, float pos,
                                           float startAngle, float endAngle, juce::Slider& s)
 {
-    using namespace sas;
-    const auto b = juce::Rectangle<float> ((float) x, (float) y, (float) w, (float) h).reduced (2.f);
+    using namespace brass;
+    const auto b = juce::Rectangle<float> ((float) x, (float) y, (float) w, (float) h);
     const float r = juce::jmin (b.getWidth(), b.getHeight()) * 0.5f;
     const auto c = b.getCentre();
     const float ang = startAngle + pos * (endAngle - startAngle);
     const bool small = s.getProperties().getWithDefault ("small", false);
-    const juce::Colour accent ((juce::uint32) (int) s.getProperties().getWithDefault ("accent", (int) orange.getARGB()));
 
-    // value arc: fat marker line around the eye
-    const float ar = r * 0.93f;
-    juce::Path track, value;
-    track.addCentredArc (c.x, c.y, ar, ar, 0.f, startAngle, endAngle, true);
-    value.addCentredArc (c.x, c.y, ar, ar, 0.f, startAngle, ang, true);
-    g.setColour (ink.withAlpha (0.5f)); g.strokePath (track, juce::PathStrokeType (small ? 5.f : 7.f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
-    if (pos > 0.002f) stroke (g, value, accent, small ? 3.f : 4.5f);
-
-    // eyeball
-    const float kr = r * 0.74f;
-    g.setColour (juce::Colours::black.withAlpha (0.4f)); g.fillEllipse (c.x - kr + 1.5f, c.y - kr + 3.f, kr * 2, kr * 2);
-    g.setColour (juce::Colour (0xfffff6e4)); g.fillEllipse (c.x - kr, c.y - kr, kr * 2, kr * 2);
-    const float ir = kr * 0.8f;
-    g.setColour (accent.darker (0.3f)); g.fillEllipse (c.x - ir, c.y - ir, ir * 2, ir * 2);
-    const int spokes = small ? 18 : 26;
-    for (int i = 0; i < spokes; ++i)         // radial iris strokes, alternating colours
+    // scale ticks on a dark backing so they read over the artwork
+    g.setColour (juce::Colours::black.withAlpha (0.45f));
+    juce::Path ring; ring.addCentredArc (c.x, c.y, r * 0.93f, r * 0.93f, 0.f, startAngle - 0.12f, endAngle + 0.12f, true);
+    g.strokePath (ring, juce::PathStrokeType (r * 0.2f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
+    for (int i = 0; i <= 10; ++i)
     {
-        const float a = juce::MathConstants<float>::twoPi * (float) i / (float) spokes;
-        g.setColour (i % 2 ? accent.brighter (0.35f) : yellow);
-        g.drawLine ({ c.getPointOnCircumference (ir * 0.34f, a), c.getPointOnCircumference (ir * 0.96f, a) }, small ? 2.2f : 3.2f);
+        const float a = startAngle + (float) i / 10.f * (endAngle - startAngle);
+        const bool major = i % 5 == 0;
+        g.setColour (hi.withAlpha (major ? 1.f : 0.75f));
+        g.drawLine ({ c.getPointOnCircumference (r * (major ? 0.82f : 0.86f), a), c.getPointOnCircumference (r * 0.99f, a) }, major ? 2.4f : 1.5f);
     }
-    g.setColour (ink); g.drawEllipse (c.x - ir, c.y - ir, ir * 2, ir * 2, small ? 2.f : 2.8f);
-    const float pr = ir * 0.36f;
-    g.setColour (ink); g.fillEllipse (c.x - pr, c.y - pr, pr * 2, pr * 2);
-    g.setColour (juce::Colours::white); g.fillEllipse (c.x - pr * 0.9f, c.y - pr * 1.1f, pr * 0.6f, pr * 0.6f);
-    g.setColour (ink); g.drawEllipse (c.x - kr, c.y - kr, kr * 2, kr * 2, small ? 3.5f : 5.f);
-    // pointer: a thick marker line from the pupil out across the iris
-    juce::Path ptr; ptr.startNewSubPath (c.getPointOnCircumference (pr * 1.15f, ang)); ptr.lineTo (c.getPointOnCircumference (kr * 0.96f, ang));
-    stroke (g, ptr, juce::Colours::white, small ? 2.4f : 3.2f);
+
+    const float kr = r * 0.72f;
+    g.setColour (juce::Colours::black.withAlpha (0.5f)); g.fillEllipse (c.x - kr + 1.5f, c.y - kr + 3.5f, kr * 2, kr * 2);
+    // knurled skirt
+    g.setGradientFill (body (c, kr)); g.fillEllipse (c.x - kr, c.y - kr, kr * 2, kr * 2);
+    const int ridges = small ? 30 : 40;
+    for (int i = 0; i < ridges; ++i)
+    {
+        const float a = juce::MathConstants<float>::twoPi * (float) i / (float) ridges;
+        g.setColour (deep.withAlpha (0.55f));
+        g.drawLine ({ c.getPointOnCircumference (kr * 0.86f, a), c.getPointOnCircumference (kr * 0.995f, a) }, small ? 1.2f : 1.6f);
+        g.setColour (hi.withAlpha (0.35f));
+        g.drawLine ({ c.getPointOnCircumference (kr * 0.86f, a + 0.045f), c.getPointOnCircumference (kr * 0.995f, a + 0.045f) }, 0.8f);
+    }
+    g.setColour (deep); g.drawEllipse (c.x - kr, c.y - kr, kr * 2, kr * 2, 1.4f);
+    // polished cap with fine concentric turning marks
+    const float cr = kr * 0.74f;
+    g.setGradientFill (juce::ColourGradient (hi, c.x - cr * 0.6f, c.y - cr * 0.7f, mid.darker (0.25f), c.x + cr, c.y + cr, false));
+    g.fillEllipse (c.x - cr, c.y - cr, cr * 2, cr * 2);
+    g.setColour (deep.withAlpha (0.16f));
+    for (float t = 0.2f; t < 1.f; t += 0.16f) g.drawEllipse (c.x - cr * t, c.y - cr * t, cr * t * 2, cr * t * 2, 0.7f);
+    g.setColour (deep.withAlpha (0.7f)); g.drawEllipse (c.x - cr, c.y - cr, cr * 2, cr * 2, 1.2f);
+    // engraved pointer line, filled with black enamel, and a lit dot on the skirt
+    juce::Path ptr; ptr.addRoundedRectangle (-1.6f, -cr * 0.92f, 3.2f, cr * 0.82f, 1.4f);
+    g.setColour (juce::Colour (0xff1a1006)); g.fillPath (ptr, juce::AffineTransform::rotation (ang).translated (c.x, c.y));
+    const auto tip = c.getPointOnCircumference (kr * 0.93f, ang);
+    g.setColour (juce::Colour (0xff1a1006)); g.fillEllipse (tip.x - 2.2f, tip.y - 2.2f, 4.4f, 4.4f);
+    g.setColour (hi); g.fillEllipse (tip.x - 1.2f, tip.y - 1.6f, 2.2f, 2.2f);
 }
 
-// footswitch: a hypnotic spiral, bright when on
+// footswitch: a domed brass button with a knurled collar; a warm glow when the pedal is on
 void MarkerLookAndFeel::drawButtonBackground (juce::Graphics& g, juce::Button& b, const juce::Colour&, bool over, bool)
 {
-    using namespace sas;
-    const auto r = b.getLocalBounds().toFloat().reduced (3.f);
+    using namespace brass;
+    const auto r = b.getLocalBounds().toFloat().reduced (2.f);
     const float d = juce::jmin (r.getWidth(), r.getHeight());
     const auto rc = r.withSizeKeepingCentre (d, d);
+    const auto c = rc.getCentre(); const float R = d * 0.5f;
     const bool on = b.getToggleState();
-    g.setColour (juce::Colours::black.withAlpha (0.45f)); g.fillEllipse (rc.translated (2.f, 4.f));
-    g.setColour (ink); g.fillEllipse (rc);
-    const auto face = rc.reduced (4.f);
-    g.setColour (on ? magenta : juce::Colour (0xff5a2f86)); g.fillEllipse (face.translated (1.2f, 1.f));
-    g.setColour (on ? magenta.brighter (0.15f) : juce::Colour (0xff6a3a98)); g.fillEllipse (face);
-    g.setColour (over ? yellow : ink); g.drawEllipse (face, over ? 3.f : 2.5f);
-    const auto sp = spiral (face.getCentre(), face.getWidth() * 0.4f, 2.2f);
-    g.setColour (ink); g.strokePath (sp, juce::PathStrokeType (on ? 6.f : 5.f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
-    g.setColour (on ? juce::Colours::white : juce::Colour (0xff9a6ac8)); g.strokePath (sp, juce::PathStrokeType (on ? 3.2f : 2.4f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
+    const bool down = b.isDown();
+    g.setColour (juce::Colours::black.withAlpha (0.5f)); g.fillEllipse (rc.translated (1.5f, 3.5f));
+    g.setGradientFill (body (c, R)); g.fillEllipse (rc);                                  // collar
+    for (int i = 0; i < 44; ++i)
+    {
+        const float a = juce::MathConstants<float>::twoPi * (float) i / 44.f;
+        g.setColour (deep.withAlpha (0.55f)); g.drawLine ({ c.getPointOnCircumference (R * 0.88f, a), c.getPointOnCircumference (R * 0.995f, a) }, 1.5f);
+    }
+    g.setColour (deep); g.drawEllipse (rc, 1.4f);
+    const float dr = R * 0.74f * (down ? 0.97f : 1.f);                                    // dome
+    g.setGradientFill (juce::ColourGradient (hi, c.x - dr * 0.45f, c.y - dr * 0.55f, mid.darker (0.35f), c.x + dr, c.y + dr, true));
+    g.fillEllipse (c.x - dr, c.y - dr, dr * 2, dr * 2);
+    g.setColour (deep.withAlpha (0.8f)); g.drawEllipse (c.x - dr, c.y - dr, dr * 2, dr * 2, 1.3f);
+    g.setColour (juce::Colours::white.withAlpha (over ? 0.55f : 0.4f)); g.fillEllipse (c.x - dr * 0.5f, c.y - dr * 0.72f, dr * 0.55f, dr * 0.3f);   // highlight
+    if (on) { g.setColour (juce::Colour (0xffffc04a).withAlpha (0.2f)); g.fillEllipse (c.x - R * 1.25f, c.y - R * 1.25f, R * 2.5f, R * 2.5f); }
 }
 
-// the Ge / Si switch, sitting in his mouth: a chunky pill with an eyeball thumb
+// the Ge / Si switch: a nickel toggle lever, thrown left for germanium and right for silicon
 void MarkerLookAndFeel::drawToggleButton (juce::Graphics& g, juce::ToggleButton& b, bool over, bool)
 {
-    using namespace sas;
-    const auto r = b.getLocalBounds().toFloat().reduced (3.f);
+    const auto r = b.getLocalBounds().toFloat();
     const bool si = b.getToggleState();
-    g.setColour (juce::Colours::black.withAlpha (0.45f)); g.fillRoundedRectangle (r.translated (2.f, 3.f), r.getHeight() * 0.5f);
-    g.setColour (si ? cyan.darker (0.35f) : orange.darker (0.25f)); g.fillRoundedRectangle (r.translated (1.2f, 1.f), r.getHeight() * 0.5f);
-    g.setColour (si ? cyan : orange); g.fillRoundedRectangle (r, r.getHeight() * 0.5f);
-    g.setColour (over ? yellow : ink); g.drawRoundedRectangle (r, r.getHeight() * 0.5f, over ? 4.5f : 4.f);
-    g.setColour (ink); g.setFont (marker (15.f, false, 0.05f));
-    if (si) g.drawText ("SI", r.withTrimmedRight (r.getWidth() * 0.45f).translated (3.f, 0.f), juce::Justification::centred);   // the mode's name sits on the side the thumb left free
-    else    g.drawText ("GE", r.withTrimmedLeft (r.getWidth() * 0.45f).translated (-3.f, 0.f), juce::Justification::centred);
-    const float td = r.getHeight() - 8.f;
-    const auto thumb = juce::Rectangle<float> (si ? r.getRight() - td - 4.f : r.getX() + 4.f, r.getY() + 4.f, td, td);
-    g.setColour (juce::Colours::white); g.fillEllipse (thumb);
-    g.setColour (ink); g.drawEllipse (thumb, 3.f);
-    g.setColour (si ? blue : magenta); g.fillEllipse (thumb.getCentreX() - td * 0.2f, thumb.getCentreY() - td * 0.2f, td * 0.4f, td * 0.4f);
-    g.setColour (ink); g.fillEllipse (thumb.getCentreX() - td * 0.09f, thumb.getCentreY() - td * 0.09f, td * 0.18f, td * 0.18f);
+    const juce::Point<float> pivot (r.getCentreX(), r.getBottom() - 16.f);
+
+    // hex nut and bushing
+    juce::Path nut;
+    for (int i = 0; i < 6; ++i)
+    {
+        const auto p = pivot.getPointOnCircumference (15.f, juce::MathConstants<float>::pi / 6.f + (float) i * juce::MathConstants<float>::pi / 3.f);
+        if (i == 0) nut.startNewSubPath (p); else nut.lineTo (p);
+    }
+    nut.closeSubPath();
+    g.setColour (juce::Colours::black.withAlpha (0.5f)); g.fillPath (nut, juce::AffineTransform::translation (1.5f, 3.f));
+    g.setGradientFill (juce::ColourGradient (juce::Colour (0xfff2f2ee), pivot.x - 14.f, pivot.y - 14.f, juce::Colour (0xff6b6e68), pivot.x + 14.f, pivot.y + 14.f, false));
+    g.fillPath (nut);
+    g.setColour (juce::Colour (0xff2a2c28)); g.strokePath (nut, juce::PathStrokeType (1.2f));
+    g.setGradientFill (juce::ColourGradient (juce::Colour (0xffe8e8e2), pivot.x - 8.f, pivot.y - 8.f, juce::Colour (0xff53564f), pivot.x + 8.f, pivot.y + 8.f, false));
+    g.fillEllipse (pivot.x - 9.f, pivot.y - 9.f, 18.f, 18.f);
+    g.setColour (juce::Colour (0xff2a2c28)); g.drawEllipse (pivot.x - 9.f, pivot.y - 9.f, 18.f, 18.f, 1.f);
+
+    // the bat: a tapered lever with a rounded tip, thrown to one side
+    const float ang = juce::degreesToRadians (si ? 38.f : -38.f), len = r.getHeight() - 22.f;
+    juce::Path bat;
+    bat.startNewSubPath (-4.6f, 0.f); bat.lineTo (-3.0f, -len + 4.f);
+    bat.quadraticTo (0.f, -len - 3.f, 3.0f, -len + 4.f); bat.lineTo (4.6f, 0.f); bat.closeSubPath();
+    const auto xf = juce::AffineTransform::rotation (ang).translated (pivot.x, pivot.y);
+    g.setColour (juce::Colours::black.withAlpha (0.45f)); g.fillPath (bat, xf.translated (2.f, 3.f));
+    const auto tip = pivot + juce::Point<float> (std::sin (ang), -std::cos (ang)) * len;
+    g.setGradientFill (juce::ColourGradient (juce::Colour (0xfffafaf6), pivot.x - 6.f, pivot.y - len, juce::Colour (0xff60645c), pivot.x + 8.f, pivot.y, false));
+    g.fillPath (bat, xf);
+    g.setColour (juce::Colour (0xff2a2c28)); g.strokePath (bat, juce::PathStrokeType (1.1f), xf);
+    g.setColour (juce::Colours::white.withAlpha (over ? 0.8f : 0.55f));
+    g.drawLine (juce::Line<float> (pivot + juce::Point<float> (std::sin (ang), -std::cos (ang)) * 8.f - juce::Point<float> (std::cos (ang), std::sin (ang)) * 1.8f,
+                                   tip - juce::Point<float> (std::cos (ang), std::sin (ang)) * 1.4f), 1.4f);
 }
 
 namespace
@@ -218,9 +208,9 @@ void Sh0tyFF1Editor::resized()
     // chest, Ge / Si above the switch on the tree, the stomp button between his feet
     volume.slider.setBounds ({ kVolume.x - 40, kVolume.y - 40, 80, 80 });
     fuzz.slider.setBounds   ({ kFuzz.x - 40, kFuzz.y - 40, 80, 80 });
-    silicon.setBounds       ({ 12, 280, 84, 40 });
+    silicon.setBounds       ({ 52 - 26, 268 - 36, 52, 64 });   // between the painted Ge and Si labels
     trim.slider.setBounds   ({ 161 - 25, 270 - 25, 50, 50 });
-    footswitch.setBounds    ({ 172 - 32, 424 - 32, 64, 64 });
+    footswitch.setBounds    ({ 172 - 32, 436 - 32, 64, 64 });
 }
 
 //------------------------------------------------------------------------------ paint
@@ -239,22 +229,20 @@ void Sh0tyFF1Editor::paint (juce::Graphics& g)
         g.fillEllipse (eye.first.x - r, eye.first.y - r, r * 2, r * 2);
     }
 
-    // status light: a painted star in the rainbow, lit when the pedal is on
+    // status light: a brass bezel with a jewel, lit when the pedal is on
     const bool lit = footswitch.getToggleState();
     const juce::Point<float> eye (kLight.toFloat());
     if (lit)
     {
-        g.setGradientFill (juce::ColourGradient (lime.withAlpha (0.8f), eye.x, eye.y, lime.withAlpha (0.f), eye.x + 30.f, eye.y, true));
+        g.setGradientFill (juce::ColourGradient (juce::Colour (0xffffd24a).withAlpha (0.75f), eye.x, eye.y, juce::Colour (0xffffd24a).withAlpha (0.f), eye.x + 30.f, eye.y, true));
         g.fillEllipse (eye.x - 30.f, eye.y - 30.f, 60.f, 60.f);
-        for (int i = 0; i < 10; ++i)       // little rays
-        {
-            const float a = juce::MathConstants<float>::twoPi * (float) i / 10.f + phase * 0.2f;
-            juce::Path ray; ray.startNewSubPath (eye.getPointOnCircumference (15.f, a)); ray.lineTo (eye.getPointOnCircumference (22.f + (i % 2) * 5.f, a));
-            stroke (g, ray, yellow, 2.4f);
-        }
     }
-    g.setColour (ink); g.fillEllipse (eye.x - 11.f, eye.y - 11.f, 22.f, 22.f);
-    g.setColour (lit ? yellow : juce::Colour (0xff4a2a6a)); g.fillEllipse (eye.x - 8.f, eye.y - 8.f, 16.f, 16.f);
-    g.setColour (lit ? juce::Colour (0xff1a0c05) : juce::Colour (0xff22123a)); g.fillEllipse (eye.x - 3.5f, eye.y - 3.5f, 7.f, 7.f);
-    if (lit) { g.setColour (juce::Colours::white); g.fillEllipse (eye.x - 5.f, eye.y - 6.f, 3.5f, 3.f); }
+    g.setColour (juce::Colours::black.withAlpha (0.5f)); g.fillEllipse (eye.x - 11.f + 1.f, eye.y - 11.f + 2.f, 22.f, 22.f);
+    g.setGradientFill (brass::body (eye, 11.f)); g.fillEllipse (eye.x - 11.f, eye.y - 11.f, 22.f, 22.f);
+    g.setColour (brass::deep); g.drawEllipse (eye.x - 11.f, eye.y - 11.f, 22.f, 22.f, 1.2f);
+    g.setGradientFill (juce::ColourGradient (lit ? juce::Colour (0xfffff2a8) : juce::Colour (0xff6a3a14), eye.x - 3.f, eye.y - 4.f,
+                                             lit ? juce::Colour (0xffff9a1a) : juce::Colour (0xff2a1408), eye.x + 7.f, eye.y + 7.f, true));
+    g.fillEllipse (eye.x - 7.f, eye.y - 7.f, 14.f, 14.f);
+    g.setColour (brass::deep); g.drawEllipse (eye.x - 7.f, eye.y - 7.f, 14.f, 14.f, 1.f);
+    g.setColour (juce::Colours::white.withAlpha (lit ? 0.8f : 0.3f)); g.fillEllipse (eye.x - 4.5f, eye.y - 5.f, 4.f, 3.f);
 }
