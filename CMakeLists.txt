@@ -135,3 +135,46 @@ if(KTG1_BUILD_UI_SNAPSHOT)
     target_compile_definitions(GS424Snapshot PRIVATE JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0 JUCE_STANDALONE_APPLICATION=1)
     target_link_libraries(GS424Snapshot PRIVATE juce::juce_audio_utils juce::juce_dsp juce::juce_recommended_config_flags)
 endif()
+
+# ---------------------------------------------------------------------------
+# Pedalboard: a standalone app that hosts all four plugins in a patchable graph.
+# ---------------------------------------------------------------------------
+set(BOARD_PLUGIN_SOURCES
+    Source/PluginProcessor.cpp Source/KtgEditor.cpp
+    Source/FuzzProcessor.cpp   Source/FuzzEditor.cpp
+    Source/BluesProcessor.cpp  Source/BluesEditor.cpp
+    Source/GsProcessor.cpp     Source/GsEditor.cpp)
+
+option(KTG1_BUILD_PEDALBOARD "Build the pedalboard app" ON)
+if(KTG1_BUILD_PEDALBOARD)
+    juce_add_gui_app(Sh0tyPedalboard
+        COMPANY_NAME "Sh0ty"
+        PRODUCT_NAME "Sh0ty Pedalboard"
+        MICROPHONE_PERMISSION_ENABLED TRUE
+        MICROPHONE_PERMISSION_TEXT "Sh0ty Pedalboard needs your audio input to process your guitar.")
+    target_sources(Sh0tyPedalboard PRIVATE
+        Pedalboard/Main.cpp Pedalboard/BoardComponent.cpp Pedalboard/BoardModel.cpp ${BOARD_PLUGIN_SOURCES})
+    target_include_directories(Sh0tyPedalboard PRIVATE Source Pedalboard)
+    target_compile_definitions(Sh0tyPedalboard PRIVATE
+        JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0 JUCE_APPLICATION_NAME_STRING="Sh0ty Pedalboard"
+        JUCE_APPLICATION_VERSION_STRING="0.1.0" SH0TY_STANDALONE_BOARD=1)
+    target_link_libraries(Sh0tyPedalboard PRIVATE juce::juce_audio_utils juce::juce_dsp
+        PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_warning_flags)
+
+    # headless test of the audio graph (patching, loops, save/load)
+    juce_add_console_app(PedalboardTest PRODUCT_NAME "PedalboardTest")
+    target_sources(PedalboardTest PRIVATE tests/board_test.cpp Pedalboard/BoardModel.cpp ${BOARD_PLUGIN_SOURCES})
+    target_include_directories(PedalboardTest PRIVATE Source Pedalboard)
+    target_compile_definitions(PedalboardTest PRIVATE JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0 SH0TY_STANDALONE_BOARD=1)
+    target_link_libraries(PedalboardTest PRIVATE juce::juce_audio_utils juce::juce_dsp juce::juce_recommended_config_flags)
+    if(KTG1_BUILD_TESTS)
+        add_test(NAME pedalboard COMMAND PedalboardTest)
+    endif()
+    if(KTG1_BUILD_PEDALBOARD AND KTG1_BUILD_UI_SNAPSHOT)
+        juce_add_console_app(PedalboardSnapshot PRODUCT_NAME "PedalboardSnapshot")
+        target_sources(PedalboardSnapshot PRIVATE tests/snapshot_board.cpp Pedalboard/BoardComponent.cpp Pedalboard/BoardModel.cpp ${BOARD_PLUGIN_SOURCES})
+        target_include_directories(PedalboardSnapshot PRIVATE Source Pedalboard)
+        target_compile_definitions(PedalboardSnapshot PRIVATE JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0 JUCE_STANDALONE_APPLICATION=1 SH0TY_STANDALONE_BOARD=1)
+        target_link_libraries(PedalboardSnapshot PRIVATE juce::juce_audio_utils juce::juce_dsp juce::juce_recommended_config_flags)
+    endif()
+endif()

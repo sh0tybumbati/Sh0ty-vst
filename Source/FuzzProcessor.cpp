@@ -76,4 +76,7 @@ void Sh0tyFZ3Processor::setStateInformation (const void* data, int size)
             apvts.replaceState (juce::ValueTree::fromXml (*xml));
 }
 
+// The pedalboard app links these processors directly and has no plugin entry point.
+#ifndef SH0TY_STANDALONE_BOARD
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter() { return new Sh0tyFZ3Processor(); }
+#endif

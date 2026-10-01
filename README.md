@@ -11,6 +11,18 @@ Four guitar-pedal / preamp plugins (VST3, AU on macOS, and Standalone), built wi
 
 These are "inspired by" models, not component-level circuit simulations. Interfaces are original artwork.
 
+## Sh0ty Pedalboard (standalone app)
+![Pedalboard](docs/pedalboard.png)
+
+A standalone app that hosts all four plugins at once, with the KTG-1 as a rack unit on top and the pedals on a board
+below. **Drag** a unit by its header to move it (rack units slide up and down), **drag from a jack** to another jack to
+patch a virtual cable (stereo pair; a cable that would make a loop is refused), **double-click** a cable (or right-click
+and choose Delete) to remove it, and use **+ ADD** to add more units (several of each are fine). **Guitar In** has a gain
+knob and a MONO switch (copies input 1 to both channels, which is what a guitar on a single input needs); **Output** has a
+master volume and a level meter. Save and Load write `.sh0tyboard` files, and the app reopens your last board and audio
+device. It is built as part of the normal build (`-DKTG1_BUILD_PEDALBOARD=OFF` to skip it); on macOS it is a universal
+(Apple Silicon + Intel) app, unsigned like the plugins. Run it from `build/Sh0tyPedalboard_artefacts/Release/`.
+
 ## Build
     cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
     cmake --build build -j

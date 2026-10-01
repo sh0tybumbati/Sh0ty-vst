@@ -41,6 +41,7 @@ jobs:
           for f in build/*_artefacts/Release/AU/*.component build/*_artefacts/Release/VST3/*.vst3; do
             ditto -c -k --keepParent "$f" "dist/$(basename "$f").zip"
           done
+          ditto -c -k --keepParent "build/Sh0tyPedalboard_artefacts/Release/Sh0ty Pedalboard.app" "dist/Sh0ty-Pedalboard.app.zip"
       - uses: actions/upload-artifact@v4
         if: runner.os == 'macOS'
         with:
@@ -53,3 +54,4 @@ jobs:
           name: Sh0ty-plugins-${{ runner.os }}
           path: |
             build/*_artefacts/Release/VST3/
+            build/Sh0tyPedalboard_artefacts/Release/
