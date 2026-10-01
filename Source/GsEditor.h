@@ -1,9 +1,10 @@
 #pragma once
 #include "GsProcessor.h"
 
-// Retro cassette-futurism editor for the GS-424. Layout follows the pedal reference: VOLUME / GAIN 2 / GAIN 1 on
-// top, BASS / TREBLE below, plus a VU meter and a cassette whose reels turn with the signal. Original artwork.
-class CassetteLookAndFeel : public juce::LookAndFeel_V4
+// 80s street-art editor for the GS-424. Layout follows the pedal reference: VOLUME / GAIN 2 / GAIN 1 on top,
+// BASS / TREBLE below. A brick wall, neon spray paint, graffiti lettering, masking-tape labels, an LED bar meter and
+// a die-cut cassette sticker whose reels turn with the signal. All artwork is original and drawn in code.
+class StreetLookAndFeel : public juce::LookAndFeel_V4
 {
 public:
     void drawRotarySlider (juce::Graphics&, int x, int y, int w, int h, float pos,
@@ -25,19 +26,23 @@ private:
     struct Knob
     {
         juce::Slider slider;
-        juce::Label  label;
         std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> attach;
     };
-    void addKnob (Knob&, const juce::String& id, const juce::String& text, bool small);
+    struct Tag { juce::String text; juce::Point<float> centre; float rotation; bool small; };
+
+    void addKnob (Knob&, const juce::String& id, const juce::String& text, juce::Colour accent, bool small);
+    void renderBackground();
     void timerCallback() override;
 
     Sh0tyGS424Processor& proc;
-    CassetteLookAndFeel laf;
+    StreetLookAndFeel laf;
     Knob volume, gain2, gain1, bass, treble, mix, trim;
     juce::TextButton footswitch;
     std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> footAttach;
 
+    std::vector<Tag> tags;
+    juce::Image background;
     float needle = 0.f, reelAngle = 0.f;
-    juce::Rectangle<int> vuArea, tapeArea;
+    juce::Rectangle<int> meterArea, tapeArea;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (Sh0tyGS424Editor)
 };
